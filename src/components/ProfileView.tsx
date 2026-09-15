@@ -488,7 +488,6 @@ export function ProfileView({ address }: ProfileViewProps) {
   const eventLevelAvailable = contributions.length > 0 && !isScanIncomplete;
   const showHistory = eventLevelAvailable && timeline.length > 0;
   const showExplorer = eventLevelAvailable;
-  const showRefresh = !isDevFixture && !isScanIncomplete;
 
   const sessionElapsed =
     Date.now() - (sessionStartRef.current ?? Date.now());
@@ -562,16 +561,6 @@ export function ProfileView({ address }: ProfileViewProps) {
               {copied ? <Check size={12} /> : <Copy size={12} />}
               {copied ? "Copied" : "Copy address"}
             </button>
-            {showRefresh && (
-              <button
-                type="button"
-                onClick={() => fetchProfile({ soft: true })}
-                className="inline-flex items-center gap-1.5 text-[12px] text-text-muted transition hover:text-text"
-              >
-                <RefreshCw size={12} />
-                Refresh
-              </button>
-            )}
             <IndexFreshnessBadge status={indexStatus} />
           </div>
         </div>

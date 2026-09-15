@@ -67,8 +67,13 @@ const MONTHS_SHORT = [
 /**
  * Top-right Hub freshness label.
  *
- * - fresh → just verified against public Hub this request
+ * - fresh → Hub contacted/verified this request → FROM PUBLIC HUB ACTIVITY
  * - cached / stale → real persisted Hub verification time (never page-load time)
+ * - cached timestamp < 1 minute → FROM PUBLIC HUB ACTIVITY (never "UPDATED JUST NOW")
+ *
+ * Reading Turso alone does not upgrade freshness to "fresh"; that flag is set
+ * only when Hub was contacted. This helper only formats — it does not invent
+ * timestamps or rewrite hub_wallet_cache.updated_at.
  */
 export function formatHubActivityFreshnessLabel(opts: {
   freshness: "fresh" | "cached" | "stale";
@@ -97,8 +102,9 @@ export function formatHubActivityFreshnessLabel(opts: {
   const hour = 60 * minute;
   const day = 24 * hour;
 
+  // Extremely recent persisted time: avoid unclear "JUST NOW".
   if (deltaMs < minute) {
-    return "UPDATED JUST NOW";
+    return "FROM PUBLIC HUB ACTIVITY";
   }
   if (deltaMs < hour) {
     const mins = Math.floor(deltaMs / minute);
