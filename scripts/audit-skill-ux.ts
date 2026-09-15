@@ -25,6 +25,10 @@ const SKILLS = [
   "Open",
   "Arrange",
   "Rotate",
+  "Insert",
+  "Close",
+  "Separate",
+  "Reach",
 ] as const;
 
 async function main() {

@@ -11,6 +11,10 @@ export const ASSETS = {
     Open: "/assets/axis-skill-open.png",
     Arrange: "/assets/axis-skill-arrange.png",
     Rotate: "/assets/axis-skill-rotate.png",
+    Insert: "/assets/axis-skill-insert.png",
+    Close: "/assets/axis-skill-close.png",
+    Separate: "/assets/axis-skill-separate.png",
+    Reach: "/assets/axis-skill-reach.png",
   } as Record<string, string>,
 } as const;
 
@@ -22,6 +26,10 @@ const SKILL_ALIASES: Record<string, keyof typeof ASSETS.skills> = {
   open: "Open",
   arrange: "Arrange",
   rotate: "Rotate",
+  insert: "Insert",
+  close: "Close",
+  separate: "Separate",
+  reach: "Reach",
 };
 
 /** Canonical Title-case skill label for known Axis atomic skills. */
@@ -48,6 +56,10 @@ export const SKILL_IMAGE_TUNING: Record<
   Open: { scale: 1 },
   Arrange: { scale: 1 },
   Rotate: { scale: 1 },
+  Insert: { scale: 1 },
+  Close: { scale: 1 },
+  Separate: { scale: 1 },
+  Reach: { scale: 1 },
 };
 
 export function skillAsset(skill: string): string | null {
