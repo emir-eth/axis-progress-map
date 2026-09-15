@@ -78,10 +78,7 @@ Where those tasks sit — kitchen, home, office, and similar settings — based 
 How much of the Hub activity could be matched to public Axis task metadata. That coverage is what unlocks the richer skill and environment detail.
 
 ### How I build this
-A plain walkthrough of the approach: pull public Hub activity, match it to Axis task info, split the picture into skills / environments / history, and optionally cross-check Base.
-
-### Base verification
-An optional extra look at public on-chain Base records when available. Hub numbers still lead; Base is supporting context, not a replacement.
+A plain walkthrough of the approach: pull public Hub activity, match it to Axis task info, and split the picture into skills / environments / history.
 
 ### Contribution history
 Your Hub attempts over time, so you can see pace and streaks instead of only totals.
@@ -134,8 +131,9 @@ Production persistence is **Turso / libSQL** (shared durable DB). The app does n
 - `TURSO_AUTH_TOKEN`
 
 **Optional:**
-- `BASE_RPC_URL` — Base RPC (defaults to public mainnet if unset)
 - `NEXT_PUBLIC_SITE_URL` — canonical site origin for share links
+
+`BASE_RPC_URL` is unused on the public Hub-first path for now (Base scanner helpers remain in the codebase for possible later reuse).
 
 **Do not set in production:**
 - `AXIS_USE_DEV_FIXTURE` (fixtures are hard-disabled when `NODE_ENV=production` anyway)
