@@ -58,7 +58,7 @@ export function HubPreparationView({
               Ready
             </p>
             <div className="mt-8">
-              <p className="eng-label text-[11px]">Activity history</p>
+              <p className="eng-label text-[13px]">Activity history</p>
               <ActivityProgressRail percent={100} />
             </div>
           </div>
@@ -75,7 +75,7 @@ export function HubPreparationView({
         <div className="mb-8 mt-4 sm:mb-10 sm:mt-5">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 border border-ink px-3.5 py-2 font-mono text-[12px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="inline-flex items-center gap-2 border border-ink px-3.5 py-2 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <ArrowLeft size={14} />
             NEW WALLET
@@ -107,9 +107,9 @@ export function HubPreparationView({
 
             <div className="mt-8">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="eng-label text-[11px]">Activity history</p>
+                <p className="eng-label text-[13px]">Activity history</p>
                 {pct != null && (
-                  <p className="font-mono text-[11px] tabular-nums tracking-[0.08em] text-text-muted">
+                  <p className="font-mono text-[13px] tabular-nums tracking-[0.08em] text-text-muted">
                     {pct}%
                   </p>
                 )}
@@ -127,7 +127,7 @@ export function HubPreparationView({
                       ? fetchedAttempts.toLocaleString()
                       : "—"}
                 </p>
-                <p className="eng-label text-[11px]">Attempts loaded</p>
+                <p className="eng-label text-[13px]">Attempts loaded</p>
               </div>
             </div>
 
@@ -140,7 +140,7 @@ export function HubPreparationView({
                     }`}
                     aria-hidden
                   />
-                  <p className="font-mono text-[11px] tracking-[0.16em] text-text">
+                  <p className="font-mono text-[13px] tracking-[0.16em] text-text">
                     LOADING HUB HISTORY
                   </p>
                 </div>
@@ -154,13 +154,13 @@ export function HubPreparationView({
                       type="button"
                       onClick={onContinue}
                       disabled={syncing}
-                      className="border border-ink bg-ink px-4 py-2.5 font-mono text-[11px] tracking-[0.14em] text-bg transition hover:border-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                      className="border border-ink bg-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:border-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       CONTINUE
                     </button>
                     <Link
                       href="/"
-                      className="inline-flex items-center gap-2 border border-ink px-4 py-2.5 font-mono text-[11px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg"
+                      className="inline-flex items-center gap-2 border border-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg"
                     >
                       <ArrowLeft size={14} />
                       NEW WALLET

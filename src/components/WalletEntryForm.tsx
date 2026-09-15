@@ -105,7 +105,7 @@ export function WalletEntryForm({
         <button
           type="submit"
           disabled={locked || (!isValid && trimmed.length > 0)}
-          className="inline-flex shrink-0 items-center gap-2 border-l border-inherit bg-ink px-4 font-mono text-[11px] tracking-[0.14em] text-bg transition hover:bg-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
+          className="inline-flex shrink-0 items-center gap-2 border-l border-inherit bg-ink px-4 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:bg-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           VIEW REPORT
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
@@ -117,7 +117,7 @@ export function WalletEntryForm({
           {error ?? "That doesn’t look like a valid wallet address."}
         </p>
       ) : (
-        <p className="mt-3 text-[12px] text-text-muted">
+        <p className="mt-3 text-[13px] text-text-muted">
           No connect · No private keys · Public data only
         </p>
       )}

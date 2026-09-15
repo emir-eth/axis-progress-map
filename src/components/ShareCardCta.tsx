@@ -417,7 +417,7 @@ export function ShareCardCta({
                         spellCheck={false}
                         className="mt-2 w-full border border-border bg-bg-elevated px-3 py-2.5 font-mono text-sm text-ink outline-none transition placeholder:text-text-dim focus:border-ink"
                       />
-                      <span className="mt-1.5 block text-[11px] text-text-dim">
+                      <span className="mt-1.5 block text-[13px] text-text-dim">
                         Accepts @handle or x.com links — shown as @handle on the
                         card.
                       </span>
@@ -434,12 +434,12 @@ export function ShareCardCta({
                   <button
                     type="button"
                     onClick={generateCard}
-                    className="mt-8 inline-flex w-full items-center justify-center gap-2 border border-ink bg-ink px-5 py-3 font-mono text-[11px] tracking-[0.14em] text-bg transition hover:bg-accent hover:border-accent focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
+                    className="mt-8 inline-flex w-full items-center justify-center gap-2 border border-ink bg-ink px-5 py-3 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:bg-accent hover:border-accent focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                   >
                     GENERATE CARD
                     <ArrowRight size={14} strokeWidth={1.75} />
                   </button>
-                  <p className="mt-3 text-[11px] text-text-muted">
+                  <p className="mt-3 text-[13px] text-text-muted">
                     Names are optional — I don’t verify them.
                   </p>
                 </div>
@@ -494,14 +494,14 @@ export function ShareCardCta({
 
                   <div className="shrink-0 space-y-3 border-t border-border px-4 py-4 sm:px-5">
                     {exportError && (
-                      <p className="text-[12px] text-danger">{exportError}</p>
+                      <p className="text-[13px] text-danger">{exportError}</p>
                     )}
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
                       <button
                         type="button"
                         onClick={downloadPng}
                         disabled={exporting}
-                        className="inline-flex w-full items-center justify-center gap-2 border border-ink bg-ink px-4 py-2.5 font-mono text-[11px] tracking-[0.14em] text-bg transition hover:bg-accent hover:border-accent disabled:opacity-60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 border border-ink bg-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:bg-accent hover:border-accent disabled:opacity-60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                       >
                         <Download size={14} strokeWidth={1.75} />
                         {exporting ? "EXPORTING…" : "DOWNLOAD CARD"}
@@ -509,7 +509,7 @@ export function ShareCardCta({
                       <button
                         type="button"
                         onClick={shareOnX}
-                        className="inline-flex w-full items-center justify-center gap-2 border border-ink px-4 py-2.5 font-mono text-[11px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 border border-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                       >
                         <Share2 size={14} strokeWidth={1.75} />
                         SHARE ON X
@@ -520,13 +520,13 @@ export function ShareCardCta({
                           setStep("details");
                           setExportError(null);
                         }}
-                        className="inline-flex w-full items-center justify-center gap-2 border border-border px-4 py-2.5 font-mono text-[11px] tracking-[0.14em] text-text-muted transition hover:border-ink hover:text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 border border-border px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-text-muted transition hover:border-ink hover:text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                       >
                         <Pencil size={14} strokeWidth={1.75} />
                         EDIT DETAILS
                       </button>
                     </div>
-                    <p className="text-[11px] leading-relaxed text-text-dim">
+                    <p className="text-[13px] leading-relaxed text-text-dim">
                       X opens with text and your profile link. Attach the
                       downloaded PNG manually — images are not auto-uploaded.
                     </p>
@@ -556,12 +556,12 @@ export function ShareCardCta({
               ref={triggerRef}
               type="button"
               onClick={openGenerator}
-              className="mt-8 inline-flex items-center gap-2 border border-ink px-5 py-3 font-mono text-[11px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="mt-8 inline-flex items-center gap-2 border border-ink px-5 py-3 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
               GENERATE CARD
               <ArrowRight size={14} strokeWidth={1.75} />
             </button>
-            <p className="mt-3 text-[12px] text-text-muted">
+            <p className="mt-3 text-[13px] text-text-muted">
               Optional Hub / X name · 1200×675 PNG
             </p>
           </>
@@ -570,12 +570,12 @@ export function ShareCardCta({
             <button
               type="button"
               disabled
-              className="mt-8 inline-flex cursor-not-allowed items-center gap-2 border border-border px-5 py-3 font-mono text-[11px] tracking-[0.14em] text-text-dim opacity-70"
+              className="mt-8 inline-flex cursor-not-allowed items-center gap-2 border border-border px-5 py-3 font-mono text-[13px] tracking-[0.14em] text-text-dim opacity-70"
             >
               GENERATE CARD
               <ArrowRight size={14} strokeWidth={1.75} />
             </button>
-            <p className="mt-3 max-w-md text-[12px] leading-relaxed text-text-muted">
+            <p className="mt-3 max-w-md text-[13px] leading-relaxed text-text-muted">
               Card unlocks once Hub history is fully loaded.
             </p>
           </>

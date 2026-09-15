@@ -185,7 +185,7 @@ export function SkillDistribution({
                           {skill.skill.toUpperCase()}
                         </span>
                       </div>
-                      <p className="mt-1.5 eng-label text-[10px] tracking-[0.14em]">
+                      <p className="mt-1.5 eng-label text-[13px] tracking-[0.14em]">
                         Matched contributions
                       </p>
                       <div
@@ -230,7 +230,7 @@ export function SkillDistribution({
             </p>
           )}
           {!eventLevelAvailable && (
-            <p className="mt-2 text-[11px] text-text-dim">
+            <p className="mt-2 text-[13px] text-text-dim">
               Task-level detail is unavailable for this report.
             </p>
           )}

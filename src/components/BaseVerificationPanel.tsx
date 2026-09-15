@@ -10,7 +10,7 @@ export function BaseVerificationPanel({ status }: BaseVerificationPanelProps) {
   if (status.status === "complete") {
     return (
       <div className="border-y border-border py-6">
-        <p className="eng-label text-[11px]">Base verification</p>
+        <p className="eng-label text-[13px]">Base verification</p>
         <p className="mt-1 font-display text-3xl tabular-nums text-ink">
           {status.recordSubmittedCount?.toLocaleString() ?? "—"}
         </p>
@@ -24,7 +24,7 @@ export function BaseVerificationPanel({ status }: BaseVerificationPanelProps) {
   if (status.status === "incomplete") {
     return (
       <div className="border-y border-border py-6">
-        <p className="eng-label text-[11px]">Base verification</p>
+        <p className="eng-label text-[13px]">Base verification</p>
         <p className="mt-2 text-sm text-text-muted">
           Verification in progress
           {status.recordSubmittedCount != null &&
@@ -38,7 +38,7 @@ export function BaseVerificationPanel({ status }: BaseVerificationPanelProps) {
 
   return (
     <div className="border-y border-border py-6">
-      <p className="eng-label text-[11px]">Base verification</p>
+      <p className="eng-label text-[13px]">Base verification</p>
       <p className="mt-2 text-sm text-text-muted">Not yet verified</p>
     </div>
   );

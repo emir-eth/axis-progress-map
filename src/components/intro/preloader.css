@@ -250,7 +250,7 @@
   position: absolute;
   bottom: 2rem;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #5c6058;

@@ -8,7 +8,7 @@ interface WelcomeModalProps {
 }
 
 const sectionTitleClass =
-  "mb-5 font-mono text-[12px] uppercase tracking-[0.24em] text-text-muted";
+  "mb-5 font-mono text-[13px] uppercase tracking-[0.24em] text-text-muted";
 
 const sectionBodyClass =
   "space-y-4 text-[15px] leading-relaxed text-text-muted";
@@ -82,7 +82,7 @@ export function WelcomeModal({ open, onEnter }: WelcomeModalProps) {
                   Not official. Not affiliated with Axis Robotics. Just a
                   community side project.
                 </p>
-                <div className="space-y-1 border-t border-border pt-4 font-mono text-[12px] tracking-[0.08em] text-text-muted">
+                <div className="space-y-1 border-t border-border pt-4 font-mono text-[13px] tracking-[0.08em] text-text-muted">
                   <p>Unofficial</p>
                   <p>Public data only</p>
                   <p>No wallet connect</p>
@@ -96,7 +96,7 @@ export function WelcomeModal({ open, onEnter }: WelcomeModalProps) {
           <button
             type="button"
             onClick={onEnter}
-            className="w-full border border-ink bg-ink py-4 font-mono text-[11px] uppercase tracking-[0.28em] text-bg transition hover:border-accent hover:bg-accent"
+            className="w-full border border-ink bg-ink py-4 font-mono text-[13px] uppercase tracking-[0.28em] text-bg transition hover:border-accent hover:bg-accent"
           >
             Got it, Enter
           </button>

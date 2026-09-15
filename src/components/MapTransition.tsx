@@ -77,7 +77,7 @@ export function MapTransition({
         />
 
         <div
-          className={`mt-6 flex justify-center gap-8 font-mono text-[11px] tracking-[0.2em] text-text-muted transition-opacity duration-500 sm:gap-12 ${
+          className={`mt-6 flex justify-center gap-8 font-mono text-[13px] tracking-[0.2em] text-text-muted transition-opacity duration-500 sm:gap-12 ${
             step >= 2 || reduced ? "opacity-100" : "opacity-0"
           }`}
         >

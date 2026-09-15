@@ -197,12 +197,12 @@ export function ContributionExplorer({
             ? `Showing 0 of ${contributions.length} contributions`
             : `Showing ${pageStart}–${pageEnd} of ${totalFiltered} contributions`}
         </p>
-        <label className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] text-text-dim">
+        <label className="inline-flex items-center gap-2 font-mono text-[13px] tracking-[0.12em] text-text-dim">
           <span className="sr-only">Rows per page</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
-            className="border border-border bg-bg-panel px-2 py-1.5 text-[10px] tracking-[0.12em] text-text-muted outline-none"
+            className="border border-border bg-bg-panel px-2 py-1.5 text-[13px] tracking-[0.12em] text-text-muted outline-none"
             aria-label="Rows per page"
           >
             {PAGE_SIZE_OPTIONS.map((n) => (
@@ -245,7 +245,7 @@ export function ContributionExplorer({
                       <span className="text-text-muted">Unmapped</span>
                     )}
                   </p>
-                  <p className="font-mono text-[11px] text-text-dim">
+                  <p className="font-mono text-[13px] text-text-dim">
                     {c.taskId}
                   </p>
                 </td>
@@ -284,7 +284,7 @@ export function ContributionExplorer({
                     </a>
                   ) : (
                     <span
-                      className="font-mono text-[10px] tracking-[0.12em] text-text-dim"
+                      className="font-mono text-[13px] tracking-[0.12em] text-text-dim"
                       title="No transaction hash on this Hub attempt"
                     >
                       —
@@ -315,18 +315,18 @@ export function ContributionExplorer({
               type="button"
               disabled={safePage <= 1}
               onClick={() => goToPage(safePage - 1)}
-              className="border border-border px-3 py-2 font-mono text-[10px] tracking-[0.14em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
+              className="border border-border px-3 py-2 font-mono text-[13px] tracking-[0.14em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
               PREVIOUS
             </button>
-            <p className="font-mono text-[11px] tabular-nums tracking-[0.08em] text-text-dim">
+            <p className="font-mono text-[13px] tabular-nums tracking-[0.08em] text-text-dim">
               {safePage} / {totalPages}
             </p>
             <button
               type="button"
               disabled={safePage >= totalPages}
               onClick={() => goToPage(safePage + 1)}
-              className="border border-border px-3 py-2 font-mono text-[10px] tracking-[0.14em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
+              className="border border-border px-3 py-2 font-mono text-[13px] tracking-[0.14em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
               NEXT
             </button>
@@ -338,7 +338,7 @@ export function ContributionExplorer({
               type="button"
               disabled={safePage <= 1}
               onClick={() => goToPage(safePage - 1)}
-              className="border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-[0.12em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
+              className="border border-border px-2.5 py-1.5 font-mono text-[13px] tracking-[0.12em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
               PREVIOUS
             </button>
@@ -346,7 +346,7 @@ export function ContributionExplorer({
               item === "ellipsis" ? (
                 <span
                   key={`e-${idx}`}
-                  className="px-1.5 font-mono text-[11px] text-text-dim"
+                  className="px-1.5 font-mono text-[13px] text-text-dim"
                   aria-hidden
                 >
                   …
@@ -357,7 +357,7 @@ export function ContributionExplorer({
                   type="button"
                   onClick={() => goToPage(item)}
                   aria-current={item === safePage ? "page" : undefined}
-                  className={`min-w-[2rem] border px-2 py-1.5 font-mono text-[11px] tabular-nums tracking-[0.06em] transition ${
+                  className={`min-w-[2rem] border px-2 py-1.5 font-mono text-[13px] tabular-nums tracking-[0.06em] transition ${
                     item === safePage
                       ? "border-ink bg-ink text-bg"
                       : "border-border text-text-muted hover:border-ink hover:text-ink"
@@ -371,7 +371,7 @@ export function ContributionExplorer({
               type="button"
               disabled={safePage >= totalPages}
               onClick={() => goToPage(safePage + 1)}
-              className="border border-border px-2.5 py-1.5 font-mono text-[10px] tracking-[0.12em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
+              className="border border-border px-2.5 py-1.5 font-mono text-[13px] tracking-[0.12em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
               NEXT
             </button>

@@ -40,6 +40,9 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
+  /* Slightly larger than Tailwind default 12px — labels/meta stay readable */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.35rem;
 }
 
 * {
@@ -104,8 +107,8 @@ h4,
 
 .eng-label {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 12px;
-  letter-spacing: 0.16em;
+  font-size: 13.5px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
 }

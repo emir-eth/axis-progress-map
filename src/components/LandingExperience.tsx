@@ -139,7 +139,7 @@ export function LandingExperience() {
                 >
                   <div className="absolute left-[6%] top-[10%] h-px w-[28%] bg-border-strong/80" />
                   <div className="absolute left-[6%] top-[10%] h-3 w-px bg-border-strong/80" />
-                  <p className="absolute left-[7%] top-[4%] eng-label text-[11px]">
+                  <p className="absolute left-[7%] top-[4%] eng-label text-[13px]">
                     Your wallet
                   </p>
                   <div className="absolute bottom-[18%] right-[8%] h-16 w-16 rounded-full border border-border" />
@@ -147,10 +147,10 @@ export function LandingExperience() {
                     <div className="absolute left-0 top-1/2 h-px w-2 bg-text-dim" />
                     <div className="absolute left-1/2 top-0 h-2 w-px bg-text-dim" />
                   </div>
-                  <p className="absolute bottom-[8%] right-[6%] eng-label text-[11px]">
+                  <p className="absolute bottom-[8%] right-[6%] eng-label text-[13px]">
                     Skills
                   </p>
-                  <p className="absolute left-[8%] bottom-[12%] eng-label text-[11px]">
+                  <p className="absolute left-[8%] bottom-[12%] eng-label text-[13px]">
                     Public only
                   </p>
                 </div>
@@ -189,7 +189,7 @@ export function LandingExperience() {
                 },
               ].map((step) => (
                 <div key={step.n} className="min-w-0">
-                  <p className="font-mono text-[11px] tracking-[0.2em] text-accent">
+                  <p className="font-mono text-[13px] tracking-[0.2em] text-accent">
                     {step.n}
                   </p>
                   <h2 className="mt-2 font-display text-lg tracking-[0.04em] text-ink">

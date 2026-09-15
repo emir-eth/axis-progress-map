@@ -40,7 +40,7 @@ export function SiteNav({
             <AxisBrandMark variant="nav" />
           </Link>
           <nav
-            className="flex shrink-0 items-center gap-5 font-mono text-[12px] tracking-[0.14em] text-text-muted sm:gap-8"
+            className="flex shrink-0 items-center gap-5 font-mono text-[13px] tracking-[0.14em] text-text-muted sm:gap-8"
             aria-label="Primary"
           >
             <button

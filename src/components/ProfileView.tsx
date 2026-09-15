@@ -53,7 +53,7 @@ function SectionHeader({
         spacious ? "mb-10 sm:mb-12" : "mb-8"
       }`}
     >
-      <p className="font-mono text-[11px] tracking-[0.2em] text-accent">
+      <p className="font-mono text-[13px] tracking-[0.2em] text-accent">
         {code}
       </p>
       <h2 className="mt-2 font-display text-xl tracking-tight text-ink sm:text-2xl">
@@ -431,7 +431,7 @@ export function ProfileView({ address }: ProfileViewProps) {
             )}
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 border border-ink px-4 py-2.5 font-mono text-[12px] tracking-[0.12em] text-ink transition hover:bg-ink hover:text-bg"
+              className="inline-flex items-center gap-1.5 border border-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.12em] text-ink transition hover:bg-ink hover:text-bg"
             >
               <ArrowLeft size={14} />
               NEW WALLET
@@ -547,7 +547,7 @@ export function ProfileView({ address }: ProfileViewProps) {
         <div className="mb-10 mt-4 flex flex-wrap items-center justify-between gap-3 sm:mt-5 sm:mb-12">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 border border-ink px-3.5 py-2 font-mono text-[12px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="inline-flex items-center gap-2 border border-ink px-3.5 py-2 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <ArrowLeft size={14} />
             NEW WALLET
@@ -556,7 +556,7 @@ export function ProfileView({ address }: ProfileViewProps) {
             <button
               type="button"
               onClick={copyAddress}
-              className="inline-flex items-center gap-1.5 text-[12px] text-text-muted transition hover:text-text"
+              className="inline-flex items-center gap-1.5 text-[13px] text-text-muted transition hover:text-text"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
               {copied ? "Copied" : "Copy address"}
@@ -617,10 +617,10 @@ export function ProfileView({ address }: ProfileViewProps) {
                   ).toLocaleString()}
                 </p>
                 <p className="mt-2 eng-label">Trajectories</p>
-                <p className="mt-1 text-[12px] text-text-dim">
+                <p className="mt-1 text-[13px] text-text-dim">
                   From public Hub activity
                 </p>
-                <p className="mt-2 max-w-md text-[11px] leading-relaxed text-text-muted">
+                <p className="mt-2 max-w-md text-[13px] leading-relaxed text-text-muted">
                   Hub’s logged-in total can be a bit different — this page uses
                   the public number.
                 </p>
@@ -630,19 +630,19 @@ export function ProfileView({ address }: ProfileViewProps) {
                     <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">
                       {summary.uniqueTasks}
                     </p>
-                    <p className="mt-1 eng-label text-[11px]">Unique tasks</p>
+                    <p className="mt-1 eng-label text-[13px]">Unique tasks</p>
                   </div>
                   <div className="border-l border-border pl-4">
                     <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">
                       {formatScore(summary.averageScore)}
                     </p>
-                    <p className="mt-1 eng-label text-[11px]">Average score</p>
+                    <p className="mt-1 eng-label text-[13px]">Average score</p>
                   </div>
                   <div className="border-l border-border pl-4">
                     <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">
                       {formatScore(summary.bestScore)}
                     </p>
-                    <p className="mt-1 eng-label text-[11px]">Best score</p>
+                    <p className="mt-1 eng-label text-[13px]">Best score</p>
                   </div>
                 </div>
 
@@ -652,7 +652,7 @@ export function ProfileView({ address }: ProfileViewProps) {
                       <p className="font-display text-xl tabular-nums text-ink">
                         {data.hubTxhash.trajectoryCount.toLocaleString()}
                       </p>
-                      <p className="mt-1 eng-label text-[11px]">
+                      <p className="mt-1 eng-label text-[13px]">
                         Signed attempts
                       </p>
                     </div>
@@ -660,7 +660,7 @@ export function ProfileView({ address }: ProfileViewProps) {
                       <p className="font-display text-xl tabular-nums text-ink">
                         {data.hubTxhash.unsignedAttemptCount.toLocaleString()}
                       </p>
-                      <p className="mt-1 eng-label text-[11px]">
+                      <p className="mt-1 eng-label text-[13px]">
                         Unsigned attempts
                       </p>
                     </div>
@@ -689,7 +689,7 @@ export function ProfileView({ address }: ProfileViewProps) {
                   priority
                 />
                 <div className="relative z-[1] mt-4 flex flex-wrap items-baseline justify-between gap-2 border-t border-border pt-4">
-                  <p className="font-mono text-[12px] tabular-nums text-text-muted">
+                  <p className="font-mono text-[13px] tabular-nums text-text-muted">
                     {coverage.mappedUniqueTasks} / {coverage.totalUniqueTasks}{" "}
                     tasks mapped
                   </p>
