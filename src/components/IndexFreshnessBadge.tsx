@@ -2,13 +2,19 @@
 
 import { useId, useState } from "react";
 import { Info } from "lucide-react";
+import { formatHubActivityFreshnessLabel } from "@/lib/format";
 import type { IndexStatus } from "@/types";
 
 interface IndexFreshnessBadgeProps {
   status: IndexStatus;
+  /** Test override — production uses Date.now(). */
+  nowMs?: number;
 }
 
-export function IndexFreshnessBadge({ status }: IndexFreshnessBadgeProps) {
+export function IndexFreshnessBadge({
+  status,
+  nowMs,
+}: IndexFreshnessBadgeProps) {
   const [open, setOpen] = useState(false);
   const tipId = useId();
 
@@ -30,7 +36,11 @@ export function IndexFreshnessBadge({ status }: IndexFreshnessBadgeProps) {
     return null;
   }
 
-  const title = "From public Hub activity";
+  const title = formatHubActivityFreshnessLabel({
+    freshness: status.freshness,
+    lastVerifiedAt: status.lastSyncAt,
+    nowMs,
+  });
   const subtitle = isStale
     ? "Might be missing the newest Hub attempts"
     : null;
@@ -45,13 +55,13 @@ export function IndexFreshnessBadge({ status }: IndexFreshnessBadgeProps) {
         }`}
         aria-hidden
       />
-      <div>
-        <p className="text-text">{title}</p>
+      <div className="min-w-0">
+        <p className="uppercase tracking-[0.12em] text-text">{title}</p>
         {subtitle && <p className="text-text-dim">{subtitle}</p>}
       </div>
       <button
         type="button"
-        className="mt-0.5 text-text-dim transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="mt-0.5 shrink-0 text-text-dim transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
         aria-expanded={open}
         aria-controls={tipId}
         onClick={() => setOpen((v) => !v)}

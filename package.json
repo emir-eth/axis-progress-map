@@ -17,8 +17,9 @@
     "test:hub-semantics": "tsx scripts/test-hub-semantics.ts",
     "test:fixture-priority": "tsx scripts/test-fixture-priority.ts",
     "test:profile-resume": "tsx scripts/test-profile-resume.ts",
-    "test": "tsx scripts/test-hub-cache.ts && tsx scripts/test-profile-resume.ts && tsx scripts/test-hub-preparation.ts && tsx scripts/test-hub-semantics.ts && tsx scripts/test-fixture-priority.ts && tsx scripts/test-turso-persistence.ts",
+    "test": "tsx scripts/test-hub-cache.ts && tsx scripts/test-profile-resume.ts && tsx scripts/test-hub-preparation.ts && tsx scripts/test-hub-semantics.ts && tsx scripts/test-fixture-priority.ts && tsx scripts/test-turso-persistence.ts && tsx scripts/test-hub-freshness-label.ts",
     "test:turso": "tsx scripts/test-turso-persistence.ts",
+    "test:freshness": "tsx scripts/test-hub-freshness-label.ts",
     "backfill:timestamps": "tsx scripts/backfill-wallet-timestamps.ts"
   },
   "dependencies": {

@@ -803,7 +803,8 @@ export async function ensureHubAttemptHistory(
         return await snapshotFromCache(cache, {
           httpRequests,
           stale: false,
-          fromCache: true,
+          // Hub was contacted and verified this request — not a silent cache hit.
+          fromCache: false,
           warnings,
         });
       }
