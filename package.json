@@ -1,0 +1,46 @@
+{
+  "name": "axis-progress-map",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "index:axis": "tsx scripts/index-axis.ts",
+    "index:axis:update": "tsx scripts/index-axis-update.ts",
+    "test:blockscout": "tsx scripts/test-blockscout-axis.ts",
+    "test:etherscan": "tsx scripts/test-etherscan-axis.ts",
+    "test:wallet-cache": "tsx scripts/test-wallet-cache.ts",
+    "test:hub-cache": "tsx scripts/test-hub-cache.ts",
+    "test:hub-preparation": "tsx scripts/test-hub-preparation.ts",
+    "test:hub-semantics": "tsx scripts/test-hub-semantics.ts",
+    "test:fixture-priority": "tsx scripts/test-fixture-priority.ts",
+    "test:profile-resume": "tsx scripts/test-profile-resume.ts",
+    "test": "tsx scripts/test-hub-cache.ts && tsx scripts/test-profile-resume.ts && tsx scripts/test-hub-preparation.ts && tsx scripts/test-hub-semantics.ts && tsx scripts/test-fixture-priority.ts",
+    "backfill:timestamps": "tsx scripts/backfill-wallet-timestamps.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^0.544.0",
+    "next": "^15.5.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "recharts": "^3.1.2",
+    "viem": "^2.37.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^20.19.11",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "eslint": "^9.34.0",
+    "eslint-config-next": "^15.5.2",
+    "tailwindcss": "^4.1.12",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.2"
+  }
+}

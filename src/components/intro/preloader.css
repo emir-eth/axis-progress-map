@@ -1,0 +1,337 @@
+/* Shared Axis brand mark (preloader) */
+
+.axis-brand-mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 1.25rem;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .axis-brand-mark {
+    gap: 1.85rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .axis-brand-mark {
+    gap: 2.25rem;
+  }
+}
+
+.axis-brand-mark__logo-wrap {
+  flex-shrink: 0;
+  width: 112px;
+  height: 112px;
+}
+
+@media (min-width: 768px) {
+  .axis-brand-mark__logo-wrap {
+    width: 132px;
+    height: 132px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .axis-brand-mark__logo-wrap {
+    width: 152px;
+    height: 152px;
+  }
+}
+
+.axis-brand-mark__wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  line-height: 1.02;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.axis-brand-mark__wordmark-line {
+  font-size: 1.45rem;
+  letter-spacing: 0.14em;
+  background: linear-gradient(
+    118deg,
+    #151713 0%,
+    #5c6058 16%,
+    #252923 32%,
+    #8a8e84 48%,
+    #151713 64%,
+    #4a4e47 80%,
+    #252923 100%
+  );
+  background-size: 260% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: axis-brand-shimmer 3.2s ease-in-out infinite;
+  filter: none;
+}
+
+@media (min-width: 768px) {
+  .axis-brand-mark__wordmark-line {
+    font-size: 2rem;
+    letter-spacing: 0.16em;
+  }
+}
+
+@media (min-width: 1024px) {
+  .axis-brand-mark__wordmark-line {
+    font-size: 2.35rem;
+    letter-spacing: 0.18em;
+  }
+}
+
+@keyframes axis-brand-shimmer {
+  0% {
+    background-position: 160% center;
+  }
+  100% {
+    background-position: -160% center;
+  }
+}
+
+.axis-brand-mark .axis-logo-scene {
+  perspective: 1000px;
+  perspective-origin: 50% 45%;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.axis-brand-mark .axis-logo-spin {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  animation: axis-logo-spin-y 3.2s linear infinite;
+  will-change: transform;
+}
+
+.axis-brand-mark .axis-logo-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.axis-brand-mark .axis-logo-stack img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  /* SVG is white — invert for light preloader / site UI */
+  filter: brightness(0) saturate(100%);
+}
+
+.axis-brand-mark .axis-logo-stack img:nth-child(1) {
+  opacity: 0.22;
+  transform: translateZ(-10px) scale(0.92);
+}
+
+.axis-brand-mark .axis-logo-stack img:nth-child(2) {
+  opacity: 0.4;
+  transform: translateZ(-5px) scale(0.96);
+}
+
+.axis-brand-mark .axis-logo-stack img:nth-child(3) {
+  opacity: 1;
+  transform: translateZ(0);
+}
+
+@keyframes axis-logo-spin-y {
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axis-brand-mark .axis-logo-spin {
+    animation: none;
+  }
+
+  .axis-brand-mark__wordmark-line {
+    animation: none;
+    background-position: center center;
+  }
+}
+
+/* Compact header mark (light UI) */
+.axis-brand-mark--nav {
+  gap: 0.85rem;
+}
+
+.axis-brand-mark--nav .axis-brand-mark__logo-wrap {
+  width: 44px;
+  height: 44px;
+}
+
+@media (min-width: 640px) {
+  .axis-brand-mark--nav .axis-brand-mark__logo-wrap {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+.axis-brand-mark--nav .axis-brand-mark__wordmark {
+  gap: 0.1rem;
+  letter-spacing: 0.14em;
+}
+
+.axis-brand-mark--nav .axis-brand-mark__wordmark-line {
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  /* Solid ink — background-clip shimmer reads as a black bar on light UI */
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: var(--ink, #252923);
+  animation: none;
+  filter: none;
+}
+
+@media (min-width: 640px) {
+  .axis-brand-mark--nav .axis-brand-mark__wordmark-line {
+    font-size: 1.1rem;
+    letter-spacing: 0.16em;
+  }
+}
+
+.axis-brand-mark--nav .axis-logo-stack img {
+  opacity: 0.92;
+}
+
+.axis-brand-mark--nav .axis-logo-stack img:nth-child(1),
+.axis-brand-mark--nav .axis-logo-stack img:nth-child(2) {
+  opacity: 0.2;
+}
+
+/* Preloader shell — matches site bg */
+.axis-preloader {
+  --preloader-bg: #f3f2ec;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--preloader-bg);
+  cursor: pointer;
+  -webkit-font-smoothing: antialiased;
+  animation: axis-preloader-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.axis-preloader.is-exiting {
+  animation: axis-preloader-out 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  pointer-events: none;
+}
+
+.axis-preloader__mark {
+  position: relative;
+  z-index: 10;
+  animation: axis-preloader-mark-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.axis-preloader__hint {
+  position: absolute;
+  bottom: 2rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #5c6058;
+  animation: axis-preloader-hint-in 0.4s ease both;
+  animation-delay: 1.2s;
+}
+
+.axis-preloader-grid {
+  background-image:
+    linear-gradient(to right, rgba(37, 41, 35, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37, 41, 35, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.axis-preloader-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.axis-preloader-vignette {
+  background: radial-gradient(
+    ellipse 75% 55% at 50% 38%,
+    transparent 0%,
+    rgba(243, 242, 236, 0.35) 68%,
+    rgba(226, 225, 218, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+@keyframes axis-preloader-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes axis-preloader-out {
+  to {
+    opacity: 0;
+    transform: scale(1.02);
+    filter: blur(6px);
+  }
+}
+
+@keyframes axis-preloader-mark-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes axis-preloader-hint-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .axis-preloader,
+  .axis-preloader__mark,
+  .axis-preloader__hint {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+  }
+
+  .axis-preloader.is-exiting {
+    animation: none;
+    opacity: 0;
+  }
+}
