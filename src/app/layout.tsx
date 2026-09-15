@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { BackToTop } from "@/components/BackToTop";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -36,7 +37,10 @@ export default function RootLayout({
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable}`}
     >
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        {children}
+        <BackToTop />
+      </body>
     </html>
   );
 }
