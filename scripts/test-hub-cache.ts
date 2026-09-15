@@ -44,6 +44,8 @@ async function setupTempDb(): Promise<string> {
   delete process.env.TURSO_AUTH_TOKEN;
   delete process.env.AXIS_INDEX_DB_PATH;
   process.env.TURSO_DATABASE_URL = ":memory:";
+  // Hub-cache suite must not hit live Base RPC. Budget < 800ms → read-only Base.
+  process.env.AXIS_WALLET_SCAN_BUDGET_MS = "1";
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "axis-hub-cache-"));
   await openDatabase();
   return dir;
@@ -56,6 +58,7 @@ async function teardownTempDb(dir: string) {
   delete process.env.AXIS_USE_DEV_FIXTURE;
   delete process.env.TURSO_DATABASE_URL;
   delete process.env.TURSO_AUTH_TOKEN;
+  delete process.env.AXIS_WALLET_SCAN_BUDGET_MS;
 }
 
 function makeItem(opts: {
@@ -369,6 +372,8 @@ async function run() {
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
+      // Freeze Base: Hub must still render when secondary Base cannot run.
+      scanBudgetMs: 0,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
@@ -389,6 +394,7 @@ async function run() {
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
+      scanBudgetMs: 0,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
@@ -543,6 +549,7 @@ async function run() {
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
+      scanBudgetMs: 0,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
@@ -637,10 +644,41 @@ async function run() {
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
+      // Keep complete snapshot without live tip-up RPC in this unit test.
+      scanBudgetMs: 0,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.baseVerification.status, "complete");
+  });
+
+  await test("bonus: Base RPC failure never blocks Hub profile", async () => {
+    const items = [makeItem({ attempt_id: 11, score: 70 })];
+    const { fetchImpl } = makeFetch(
+      new Map([[1, pageResponse({ page: 1, total: 1, items })]]),
+    );
+    const { RpcUnavailableError } = await import("../src/lib/wallet-scan");
+    const result = await loadProfileData(WALLET_A, {
+      fetchHubPages: fetchImpl,
+      skipMetadata: true,
+      scanBudgetMs: 15_000,
+      resolveTimestamps: false,
+      getBlockNumber: async () => {
+        throw new RpcUnavailableError("rpc down");
+      },
+      getLogs: async () => {
+        throw new RpcUnavailableError("rpc down");
+      },
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) return;
+    assert.equal(result.profile.indexStatus.scanStatus, "complete");
+    assert.equal(result.profile.contributions.length, 1);
+    assert.equal(result.profile.analytics.summary.onChainContributions, 1);
+    assert.ok(
+      result.profile.baseVerification.status === "none" ||
+        result.profile.baseVerification.status === "incomplete",
+    );
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

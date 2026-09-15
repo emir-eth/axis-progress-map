@@ -5,12 +5,14 @@
 import assert from "node:assert/strict";
 import type { ProfileResponse } from "../src/types";
 import {
+  BASE_MAX_SOFT_POLLS,
   PROFILE_MAX_AUTO_RESUMES,
   PROFILE_MAX_SESSION_MS,
   isResumeSessionExhausted,
   isScanIncompleteStatus,
   mergeProfileResponse,
   shouldScheduleAutoResume,
+  shouldScheduleBaseSoftPoll,
   shouldShowPrepPaused,
 } from "../src/lib/profile-resume";
 
@@ -341,6 +343,99 @@ test("merge keeps complete profile over stale incomplete", () => {
   });
   const merged = mergeProfileResponse(complete, incomplete, addr);
   assert.equal(merged, complete);
+});
+
+test("merge does not regress Base complete to verifying", () => {
+  const addr = "0xffffffffffffffffffffffffffffffffffffffff";
+  const prev = stubProfile({
+    address: addr,
+    scanStatus: "complete",
+    fetched: 10,
+    total: 10,
+  });
+  prev.baseVerification = {
+    status: "complete",
+    recordSubmittedCount: 836,
+    lastVerifiedAt: "2026-09-01T00:00:00.000Z",
+  };
+  const stale = stubProfile({
+    address: addr,
+    scanStatus: "complete",
+    fetched: 10,
+    total: 10,
+  });
+  stale.baseVerification = {
+    status: "incomplete",
+    recordSubmittedCount: 100,
+    lastVerifiedAt: null,
+  };
+  const merged = mergeProfileResponse(prev, stale, addr);
+  assert.ok(merged);
+  assert.equal(merged!.baseVerification.status, "complete");
+  assert.equal(merged!.baseVerification.recordSubmittedCount, 836);
+});
+
+test("Base soft poll schedules for incomplete and none only", () => {
+  assert.equal(
+    shouldScheduleBaseSoftPoll({
+      hubScanIncomplete: false,
+      baseStatus: "incomplete",
+      softPollCount: 0,
+      pausedByUser: false,
+      fetchInFlight: false,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldScheduleBaseSoftPoll({
+      hubScanIncomplete: false,
+      baseStatus: "none",
+      softPollCount: 0,
+      pausedByUser: false,
+      fetchInFlight: false,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldScheduleBaseSoftPoll({
+      hubScanIncomplete: false,
+      baseStatus: "complete",
+      softPollCount: 0,
+      pausedByUser: false,
+      fetchInFlight: false,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldScheduleBaseSoftPoll({
+      hubScanIncomplete: true,
+      baseStatus: "incomplete",
+      softPollCount: 0,
+      pausedByUser: false,
+      fetchInFlight: false,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldScheduleBaseSoftPoll({
+      hubScanIncomplete: false,
+      baseStatus: "incomplete",
+      softPollCount: BASE_MAX_SOFT_POLLS,
+      pausedByUser: false,
+      fetchInFlight: false,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldScheduleBaseSoftPoll({
+      hubScanIncomplete: false,
+      baseStatus: "incomplete",
+      softPollCount: 1,
+      pausedByUser: false,
+      fetchInFlight: true,
+    }),
+    false,
+  );
 });
 
 console.log("\nprofile-resume tests done");

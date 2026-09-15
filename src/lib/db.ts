@@ -391,7 +391,7 @@ export async function saveCompleteWalletCache(
       created_at, updated_at, last_error
     ) VALUES (?, ?, NULL, 'complete', ?, ?, NULL)
     ON CONFLICT(address) DO UPDATE SET
-      last_scanned_block = excluded.last_scanned_block,
+      last_scanned_block = MAX(wallet_cache.last_scanned_block, excluded.last_scanned_block),
       target_block = NULL,
       status = 'complete',
       updated_at = excluded.updated_at,
@@ -441,11 +441,17 @@ export async function persistIncompleteRangeProgress(
       created_at, updated_at, last_error
     ) VALUES (?, ?, ?, 'incomplete', ?, ?, NULL)
     ON CONFLICT(address) DO UPDATE SET
-      last_scanned_block = excluded.last_scanned_block,
+      last_scanned_block = MAX(wallet_cache.last_scanned_block, excluded.last_scanned_block),
       target_block = COALESCE(wallet_cache.target_block, excluded.target_block),
-      status = 'incomplete',
+      status = CASE
+        WHEN wallet_cache.status = 'complete' THEN wallet_cache.status
+        ELSE 'incomplete'
+      END,
       updated_at = excluded.updated_at,
-      last_error = NULL`,
+      last_error = CASE
+        WHEN wallet_cache.status = 'complete' THEN wallet_cache.last_error
+        ELSE NULL
+      END`,
       [addressLower, lastScannedBlock, targetBlock, nowMs, nowMs],
     ),
   );
