@@ -95,12 +95,6 @@ export function LandingExperience() {
     );
   }
 
-  const steps = [
-    { n: "01", title: m.landing.step1Title, body: m.landing.step1Body },
-    { n: "02", title: m.landing.step2Title, body: m.landing.step2Body },
-    { n: "03", title: m.landing.step3Title, body: m.landing.step3Body },
-  ];
-
   return (
     <div className="flex min-h-screen flex-col bg-bg">
       <SiteNav
@@ -171,26 +165,6 @@ export function LandingExperience() {
                   className="relative z-[1] h-auto w-full object-contain"
                 />
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="about" className="border-t border-border bg-bg-elevated/60">
-          <div className="content-shell px-5 py-12 sm:px-8 sm:py-14">
-            <div className="grid gap-8 sm:grid-cols-3 sm:gap-10">
-              {steps.map((step) => (
-                <div key={step.n} className="min-w-0">
-                  <p className="font-mono text-[13px] tracking-[0.2em] text-accent">
-                    {step.n}
-                  </p>
-                  <h2 className="mt-2 font-display text-lg tracking-[0.04em] text-ink">
-                    {step.title.toUpperCase()}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-text-muted">
-                    {step.body}
-                  </p>
-                </div>
-              ))}
             </div>
           </div>
         </section>
