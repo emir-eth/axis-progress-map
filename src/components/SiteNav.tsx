@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ExternalLink } from "lucide-react";
 import { MethodologyModal } from "./MethodologyModal";
 import { WelcomeModal } from "./WelcomeModal";
 import { AxisBrandMark } from "./intro/AxisBrandMark";
@@ -39,29 +40,47 @@ export function SiteNav({
         <div className="content-shell flex items-center justify-between gap-3 px-5 py-3.5 sm:gap-4 sm:px-8">
           <Link
             href="/"
-            className="group min-w-0 transition focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent"
+            className="group min-w-0 cursor-pointer transition focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent"
             aria-label={m.brand.homeAria}
           >
             <AxisBrandMark variant="nav" />
           </Link>
           <nav
-            className="flex shrink-0 items-center gap-3 font-mono text-[12px] tracking-[0.12em] text-text-muted sm:gap-6 sm:text-[13px] sm:tracking-[0.14em]"
+            className="flex shrink-0 items-center gap-2.5 font-mono text-[12px] tracking-[0.12em] text-text-muted sm:gap-3 sm:text-[13px] sm:tracking-[0.14em]"
             aria-label={m.nav.primaryAria}
           >
             <button
               type="button"
               onClick={() => setAboutOpen(true)}
-              className="transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent"
+              className="inline-flex cursor-pointer items-center gap-1.5 transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent"
             >
-              {m.nav.about}
+              <span>{m.nav.about}</span>
+              <ExternalLink
+                size={12}
+                strokeWidth={1.75}
+                className="shrink-0 opacity-70"
+                aria-hidden
+              />
             </button>
+            <span className="select-none text-border-strong" aria-hidden>
+              |
+            </span>
             <button
               type="button"
               onClick={() => setMethodologyOpen(true)}
-              className="max-w-[9.5rem] truncate transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent sm:max-w-none"
+              className="inline-flex max-w-[9.5rem] cursor-pointer items-center gap-1.5 truncate transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent sm:max-w-none"
             >
-              {m.nav.how}
+              <span className="truncate">{m.nav.how}</span>
+              <ExternalLink
+                size={12}
+                strokeWidth={1.75}
+                className="shrink-0 opacity-70"
+                aria-hidden
+              />
             </button>
+            <span className="select-none text-border-strong" aria-hidden>
+              |
+            </span>
             <LanguageSwitcher />
           </nav>
         </div>

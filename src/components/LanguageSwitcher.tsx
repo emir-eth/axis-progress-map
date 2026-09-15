@@ -14,7 +14,7 @@ export function LanguageSwitcher() {
         type="button"
         onClick={() => setLocale(code)}
         aria-pressed={active}
-        className={`px-1.5 py-0.5 transition focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+        className={`cursor-pointer px-1.5 py-0.5 transition focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent ${
           active
             ? "text-ink"
             : "text-text-dim hover:text-text-muted"
