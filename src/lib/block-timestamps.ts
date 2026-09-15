@@ -152,7 +152,9 @@ export async function resolveBlockTimestamps(
   if (unique.length === 0) return new Map();
 
   const useCache = options?.useCache !== false;
-  const cached = useCache ? getCachedBlockTimestamps(unique) : new Map();
+  const cached = useCache
+    ? await getCachedBlockTimestamps(unique)
+    : new Map();
   stats.cacheHits = cached.size;
   const missing = unique.filter((bn) => !cached.has(bn));
   const out = new Map(cached);
@@ -202,7 +204,7 @@ export async function resolveBlockTimestamps(
   });
 
   if (useCache && fresh.length > 0) {
-    upsertBlockTimestamps(fresh);
+    await upsertBlockTimestamps(fresh);
   }
 
   return out;

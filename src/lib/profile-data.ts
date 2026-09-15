@@ -30,6 +30,7 @@ import {
   computeHubFetchPercent,
   countCachedWalletEvents,
   countHubAttempts,
+  DatabaseConfigError,
   getHubWalletCache,
   getWalletCache,
 } from "@/lib/db";
@@ -58,7 +59,11 @@ export type ProfileLoadResult =
   | {
       ok: false;
       status: number;
-      code: "INVALID_ADDRESS" | "INTERNAL";
+      code:
+        | "INVALID_ADDRESS"
+        | "INTERNAL"
+        | "INDEX_NOT_READY"
+        | "SYNC_FAILED";
       error: string;
       details?: string;
     };
@@ -117,7 +122,7 @@ function noneBaseVerification(): BaseVerificationStatus {
 
 function hasUsableHubProgress(
   hub: Pick<HubEnsureResult, "fetchedAttempts" | "lastCompletedPage">,
-  existing: ReturnType<typeof getHubWalletCache>,
+  existing: Awaited<ReturnType<typeof getHubWalletCache>>,
 ): boolean {
   if (existing) return true;
   if (hub.fetchedAttempts > 0) return true;
@@ -165,21 +170,21 @@ async function buildFixtureProfile(
 }
 
 /** Read-only Base verification snapshot — never starts a scan. */
-export function readBaseVerification(
+export async function readBaseVerification(
   addressLower: string,
-): BaseVerificationStatus {
-  const cache = getWalletCache(addressLower);
+): Promise<BaseVerificationStatus> {
+  const cache = await getWalletCache(addressLower);
   if (!cache) return noneBaseVerification();
   if (cache.status === "complete") {
     return {
       status: "complete",
-      recordSubmittedCount: countCachedWalletEvents(addressLower),
+      recordSubmittedCount: await countCachedWalletEvents(addressLower),
       lastVerifiedAt: new Date(cache.updatedAt).toISOString(),
     };
   }
   return {
     status: "incomplete",
-    recordSubmittedCount: countCachedWalletEvents(addressLower),
+    recordSubmittedCount: await countCachedWalletEvents(addressLower),
     lastVerifiedAt: new Date(cache.updatedAt).toISOString(),
   };
 }
@@ -221,7 +226,7 @@ async function mapAndAnalyzeHub(
   warnings: string[];
   metadataAvailable: boolean;
 }> {
-  const contributions = loadHubContributions(address);
+  const contributions = await loadHubContributions(address);
   const warnings: string[] = [];
   let metadataAvailable = false;
   let mapped: MappedContribution[];
@@ -356,14 +361,38 @@ export async function loadProfileData(
   }
 
   const addressLower = address.toLowerCase();
-  const baseVerification = readBaseVerification(addressLower);
+
+  let baseVerification: BaseVerificationStatus;
+  let existing: Awaited<ReturnType<typeof getHubWalletCache>>;
+  try {
+    baseVerification = await readBaseVerification(addressLower);
+    const sqliteStarted = Date.now();
+    existing = await getHubWalletCache(addressLower);
+    timings.sqliteMs += Date.now() - sqliteStarted;
+  } catch (err) {
+    if (err instanceof DatabaseConfigError) {
+      return {
+        ok: false,
+        status: 503,
+        code: "INDEX_NOT_READY",
+        error:
+          "Progress map storage is temporarily unavailable. Please try again shortly.",
+      };
+    }
+    const msg = err instanceof Error ? err.message : "storage error";
+    return {
+      ok: false,
+      status: 503,
+      code: "SYNC_FAILED",
+      error:
+        "Progress map storage is temporarily unavailable. Please try again shortly.",
+      details: process.env.NODE_ENV === "production" ? undefined : msg,
+    };
+  }
+
   const budgetMs = deps.hubFetchBudgetMs ?? getHubFetchBudgetMs();
   const maxAgeMs = deps.hubCacheMaxAgeMs ?? getHubCacheMaxAgeMs();
   const deadline = started + budgetMs;
-
-  const sqliteStarted = Date.now();
-  const existing = getHubWalletCache(addressLower);
-  timings.sqliteMs += Date.now() - sqliteStarted;
 
   // Always attempt real Hub history first — never short-circuit to fixture.
   const syncStarted = Date.now();
@@ -379,7 +408,7 @@ export async function loadProfileData(
     timings.syncMs = Date.now() - syncStarted;
     const msg = err instanceof Error ? err.message : String(err);
     const cachedComplete = existing?.status === "complete";
-    if (cachedComplete) {
+    if (cachedComplete && existing) {
       hub = {
         status: "complete",
         totalAttempts: existing.totalAttempts,
@@ -408,7 +437,7 @@ export async function loadProfileData(
           hub: {
             status: "incomplete",
             totalAttempts: existing.totalAttempts,
-            fetchedAttempts: countHubAttempts(addressLower),
+            fetchedAttempts: await countHubAttempts(addressLower),
             lastCompletedPage: existing.lastCompletedPage,
             totalPages: existing.totalPages,
             perPage: existing.perPage,
@@ -465,7 +494,7 @@ export async function loadProfileData(
   timings.syncMs = Date.now() - syncStarted;
 
   if (hub.status !== "complete") {
-    const cacheNow = existing ?? getHubWalletCache(addressLower);
+    const cacheNow = existing ?? (await getHubWalletCache(addressLower));
     // Real Hub progress / cache row → preparation/resume (never fixture).
     if (hasUsableHubProgress(hub, cacheNow)) {
       return {
@@ -520,7 +549,7 @@ export async function loadProfileData(
   // Headline Trajectories = public Hub search-attempts.total
   analytics.summary.onChainContributions = hub.totalAttempts;
   const warnings = [...hub.warnings, ...metaWarnings];
-  const txStats: HubTxhashStats = countHubTxhashStats(addressLower);
+  const txStats: HubTxhashStats = await countHubTxhashStats(addressLower);
 
   timings.totalMs = Date.now() - started;
   const hubStatus = toHubStatus(hub);

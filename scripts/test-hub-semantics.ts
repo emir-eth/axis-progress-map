@@ -25,10 +25,17 @@ import {
   openDatabase,
   persistHubPageProgress,
 } from "../src/lib/db";
-import { deriveShareFields } from "../src/components/ShareCard";
+import { deriveShareFields } from "../src/lib/share-fields";
 import { formatScore } from "../src/lib/format";
 import type { MappedContribution, ProfileAnalytics } from "../src/types";
-import { hubHistoryProgressPercent } from "../src/components/HubPreparationView";
+
+function hubHistoryProgressPercent(
+  fetched: number,
+  total: number,
+): number | null {
+  if (total <= 0) return null;
+  return Math.min(100, Math.max(0, Math.round((fetched / total) * 100)));
+}
 
 const WALLET =
   "0x1111111111111111111111111111111111111111" as `0x${string}`;
@@ -101,16 +108,28 @@ function makeItem(opts: {
 async function withTempDb<T>(fn: () => Promise<T>): Promise<T> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "axis-hub-sem-"));
   const prev = process.env.AXIS_INDEX_DB_PATH;
-  process.env.AXIS_INDEX_DB_PATH = path.join(dir, "test.db");
-  closeDatabase();
-  openDatabase();
+  const prevTursoUrl = process.env.TURSO_DATABASE_URL;
+  const prevTursoToken = process.env.TURSO_AUTH_TOKEN;
+  const prevNode = process.env.NODE_ENV;
+  if (prevNode === "production") process.env.NODE_ENV = "test";
+  delete process.env.TURSO_AUTH_TOKEN;
+  delete process.env.AXIS_INDEX_DB_PATH;
+  process.env.TURSO_DATABASE_URL = ":memory:";
+  await closeDatabase();
+  await openDatabase();
   try {
     return await fn();
   } finally {
-    closeDatabase();
+    await closeDatabase();
     if (prev === undefined) delete process.env.AXIS_INDEX_DB_PATH;
     else process.env.AXIS_INDEX_DB_PATH = prev;
-    fs.rmSync(dir, { recursive: true, force: true });
+    if (prevTursoUrl === undefined) delete process.env.TURSO_DATABASE_URL;
+    else process.env.TURSO_DATABASE_URL = prevTursoUrl;
+    if (prevTursoToken === undefined) delete process.env.TURSO_AUTH_TOKEN;
+    else process.env.TURSO_AUTH_TOKEN = prevTursoToken;
+    if (prevNode === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = prevNode;
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* win lock */ }
   }
 }
 
@@ -123,7 +142,7 @@ async function main() {
       assert.ok(parsed);
       assert.equal(parsed!.score, null);
       assert.equal(parsed!.attemptId, 3593904);
-      persistHubPageProgress(WALLET.toLowerCase(), {
+      await persistHubPageProgress(WALLET.toLowerCase(), {
         records: [parsed!],
         totalAttempts: 1,
         totalPages: 1,
@@ -131,7 +150,7 @@ async function main() {
         perPage: 100,
         status: "incomplete",
       });
-      const rows = getCachedHubAttempts(WALLET.toLowerCase());
+      const rows = await getCachedHubAttempts(WALLET.toLowerCase());
       assert.equal(rows.length, 1);
       assert.equal(rows[0]!.score, null);
     });
@@ -172,7 +191,7 @@ async function main() {
       const existing = Array.from({ length: 863 }, (_, i) =>
         parseHubAttemptItem(makeItem({ attempt_id: i + 1, score: 10 }))!,
       );
-      persistHubPageProgress(WALLET.toLowerCase(), {
+      await persistHubPageProgress(WALLET.toLowerCase(), {
         records: existing,
         totalAttempts: 864,
         totalPages: 1,
@@ -180,8 +199,8 @@ async function main() {
         perPage: 100,
         status: "complete",
       });
-      assert.equal(countHubAttempts(WALLET.toLowerCase()), 863);
-      assert.equal(getHubWalletCache(WALLET.toLowerCase())?.status, "complete");
+      assert.equal(await countHubAttempts(WALLET.toLowerCase()), 863);
+      assert.equal((await getHubWalletCache(WALLET.toLowerCase()))?.status, "complete");
 
       const missing = makeItem({
         attempt_id: 3593904,
@@ -212,12 +231,12 @@ async function main() {
       });
 
       assert.equal(result.status, "complete");
-      assert.equal(countHubAttempts(WALLET.toLowerCase()), 864);
-      const cached = getCachedHubAttempts(WALLET.toLowerCase());
+      assert.equal(await countHubAttempts(WALLET.toLowerCase()), 864);
+      const cached = await getCachedHubAttempts(WALLET.toLowerCase());
       assert.ok(
         cached.some((r) => r.attemptId === 3593904 && r.score === null),
       );
-      assert.equal(getHubWalletCache(WALLET.toLowerCase())?.status, "complete");
+      assert.equal((await getHubWalletCache(WALLET.toLowerCase()))?.status, "complete");
     });
   });
 

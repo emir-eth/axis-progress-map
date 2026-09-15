@@ -3,7 +3,15 @@
  * Usage: npx tsx scripts/test-hub-preparation.ts
  */
 import assert from "node:assert/strict";
-import { hubHistoryProgressPercent } from "../src/components/HubPreparationView";
+
+/** Mirrors HubPreparationView.hubHistoryProgressPercent (kept local to avoid CSS imports). */
+function hubHistoryProgressPercent(
+  fetched: number,
+  total: number,
+): number | null {
+  if (total <= 0) return null;
+  return Math.min(100, Math.max(0, Math.round((fetched / total) * 100)));
+}
 
 function test(name: string, fn: () => void) {
   try {

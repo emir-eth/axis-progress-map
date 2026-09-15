@@ -125,6 +125,25 @@ If Hub has no public activity for an address, the map will reflect that. If some
 
 ---
 
+## Deploy notes (Vercel)
+
+Production persistence is **Turso / libSQL** (shared durable DB). The app does not use local SQLite on Vercel.
+
+**Required (Production):**
+- `TURSO_DATABASE_URL`
+- `TURSO_AUTH_TOKEN`
+
+**Optional:**
+- `BASE_RPC_URL` — Base RPC (defaults to public mainnet if unset)
+- `NEXT_PUBLIC_SITE_URL` — canonical site origin for share links
+
+**Do not set in production:**
+- `AXIS_USE_DEV_FIXTURE` (fixtures are hard-disabled when `NODE_ENV=production` anyway)
+
+Local development: leave `TURSO_*` unset to use a local file DB under `data/`, or point `TURSO_DATABASE_URL` at Turso / a `file:` URL. See `.env.example`.
+
+---
+
 ## Links
 
 - [Axis Robotics](https://axisrobotics.ai/)  

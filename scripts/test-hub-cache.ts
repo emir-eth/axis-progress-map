@@ -36,20 +36,26 @@ function isShareAllowedLike(status: IndexStatus): boolean {
   return true;
 }
 
-function setupTempDb(): string {
-  closeDatabase();
+async function setupTempDb(): Promise<string> {
+  await closeDatabase();
+  if (process.env.NODE_ENV === "production") {
+    process.env.NODE_ENV = "test";
+  }
+  delete process.env.TURSO_AUTH_TOKEN;
+  delete process.env.AXIS_INDEX_DB_PATH;
+  process.env.TURSO_DATABASE_URL = ":memory:";
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "axis-hub-cache-"));
-  const dbPath = path.join(dir, "test.db");
-  process.env.AXIS_INDEX_DB_PATH = dbPath;
-  openDatabase();
+  await openDatabase();
   return dir;
 }
 
-function teardownTempDb(dir: string) {
-  closeDatabase();
-  fs.rmSync(dir, { recursive: true, force: true });
+async function teardownTempDb(dir: string) {
+  await closeDatabase();
+  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* win lock */ }
   delete process.env.AXIS_INDEX_DB_PATH;
   delete process.env.AXIS_USE_DEV_FIXTURE;
+  delete process.env.TURSO_DATABASE_URL;
+  delete process.env.TURSO_AUTH_TOKEN;
 }
 
 function makeItem(opts: {
@@ -140,7 +146,7 @@ async function run() {
   let failed = 0;
 
   async function test(name: string, fn: () => Promise<void> | void) {
-    const dir = setupTempDb();
+    const dir = await setupTempDb();
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     try {
       await fn();
@@ -151,7 +157,7 @@ async function run() {
       console.error(`FAIL  ${name}`);
       console.error(err);
     } finally {
-      teardownTempDb(dir);
+      await teardownTempDb(dir);
     }
   }
 
@@ -172,12 +178,12 @@ async function run() {
     assert.equal(result.profile.indexStatus.scanStatus, "incomplete");
     assert.equal(result.profile.hubStatus?.lastCompletedPage, 1);
     assert.equal(result.profile.hubStatus?.totalAttempts, 250);
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 100);
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 100);
     assert.equal(result.profile.contributions.length, 0);
   });
 
   await test("2. resumable Hub pages", async () => {
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records: Array.from({ length: 100 }, (_, i) =>
         parseHubAttemptItem(makeItem({ attempt_id: 2000 - i }))!,
       ),
@@ -202,7 +208,7 @@ async function run() {
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
     assert.equal(result.profile.hubStatus?.lastCompletedPage, 2);
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 150);
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 150);
   });
 
   await test("3. cache completes", async () => {
@@ -219,12 +225,12 @@ async function run() {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
-    assert.equal(getHubWalletCache(WALLET_A.toLowerCase())?.status, "complete");
+    assert.equal((await getHubWalletCache(WALLET_A.toLowerCase()))?.status, "complete");
     assert.equal(result.profile.analytics.summary.onChainContributions, 3);
   });
 
   await test("4. complete cache returns instantly", async () => {
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records: [parseHubAttemptItem(makeItem({ attempt_id: 1 }))!],
       totalAttempts: 1,
       totalPages: 1,
@@ -250,7 +256,7 @@ async function run() {
 
   await test("5. new Hub total causes incremental refresh", async () => {
     const old = parseHubAttemptItem(makeItem({ attempt_id: 10 }))!;
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records: [old],
       totalAttempts: 1,
       totalPages: 1,
@@ -274,7 +280,7 @@ async function run() {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.ok(getCalls() >= 1);
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 2);
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 2);
     assert.equal(result.profile.analytics.summary.onChainContributions, 2);
   });
 
@@ -298,11 +304,11 @@ async function run() {
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 1);
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 1);
   });
 
   await test("7. 500 retry preserves progress", async () => {
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records: Array.from({ length: 100 }, (_, i) =>
         parseHubAttemptItem(makeItem({ attempt_id: 9000 - i }))!,
       ),
@@ -327,11 +333,11 @@ async function run() {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 150);
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 150);
   });
 
   await test("8. 429 preserves progress", async () => {
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records: Array.from({ length: 100 }, (_, i) =>
         parseHubAttemptItem(makeItem({ attempt_id: 8000 - i }))!,
       ),
@@ -351,7 +357,7 @@ async function run() {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "incomplete");
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 100);
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 100);
     assert.equal(result.profile.indexStatus.canResume, false);
   });
 
@@ -373,11 +379,8 @@ async function run() {
   });
 
   await test("10. Base incomplete does not block Hub profile", async () => {
-    const db = openDatabase();
-    db.prepare(
-      `INSERT INTO wallet_cache (address, last_scanned_block, target_block, status, created_at, updated_at)
-       VALUES (?, 1, 100, 'incomplete', ?, ?)`,
-    ).run(WALLET_A.toLowerCase(), Date.now(), Date.now());
+    const { ensureIncompleteWalletScan } = await import("../src/lib/db");
+    await ensureIncompleteWalletScan(WALLET_A.toLowerCase(), 1, 100);
 
     const items = [makeItem({ attempt_id: 42 })];
     const { fetchImpl } = makeFetch(
@@ -493,21 +496,17 @@ async function run() {
     if (!a.ok || !b.ok) return;
     assert.equal(a.profile.contributions[0]?.attemptId, 111);
     assert.equal(b.profile.contributions[0]?.attemptId, 222);
-    assert.equal(getCachedHubAttempts(WALLET_A.toLowerCase()).length, 1);
-    assert.equal(getCachedHubAttempts(WALLET_B.toLowerCase()).length, 1);
-    assert.equal(
-      getCachedHubAttempts(WALLET_A.toLowerCase())[0]?.taskName,
-      "Wallet A Task",
-    );
-    assert.equal(
-      getCachedHubAttempts(WALLET_B.toLowerCase())[0]?.taskName,
-      "Wallet B Task",
-    );
+    const rowsA = await getCachedHubAttempts(WALLET_A.toLowerCase());
+    const rowsB = await getCachedHubAttempts(WALLET_B.toLowerCase());
+    assert.equal(rowsA.length, 1);
+    assert.equal(rowsB.length, 1);
+    assert.equal(rowsA[0]?.taskName, "Wallet A Task");
+    assert.equal(rowsB[0]?.taskName, "Wallet B Task");
   });
 
   await test("15. fixture cannot override complete real Hub cache", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "true";
-    persistHubPageProgress(REFERENCE_WALLET.toLowerCase(), {
+    await persistHubPageProgress(REFERENCE_WALLET.toLowerCase(), {
       records: [
         parseHubAttemptItem(
           makeItem({ attempt_id: 999, score: 12, task_name: "Real Hub" }),
@@ -555,7 +554,7 @@ async function run() {
     const records = Array.from({ length: 5 }, (_, i) =>
       parseHubAttemptItem(makeItem({ attempt_id: i + 1 }))!,
     );
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records,
       totalAttempts: 5,
       totalPages: 2,
@@ -576,8 +575,8 @@ async function run() {
     if (!result.ok) return;
     assert.equal(calls, 0);
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
-    assert.equal(getHubWalletCache(WALLET_A.toLowerCase())?.status, "complete");
-    assert.equal(countHubAttempts(WALLET_A.toLowerCase()), 5);
+    assert.equal((await getHubWalletCache(WALLET_A.toLowerCase()))?.status, "complete");
+    assert.equal(await countHubAttempts(WALLET_A.toLowerCase()), 5);
   });
 
   await test("18. exhausted reconciliation does not loop forever", async () => {
@@ -587,7 +586,7 @@ async function run() {
       isHubReconcileExhaustedForTotal,
     } = await import("../src/lib/hub-attempts");
 
-    persistHubPageProgress(WALLET_A.toLowerCase(), {
+    await persistHubPageProgress(WALLET_A.toLowerCase(), {
       records: [parseHubAttemptItem(makeItem({ attempt_id: 1 }))!],
       totalAttempts: 3,
       totalPages: 1,
@@ -598,7 +597,7 @@ async function run() {
     });
     assert.equal(
       isHubReconcileExhaustedForTotal(
-        getHubWalletCache(WALLET_A.toLowerCase())?.lastError,
+        (await getHubWalletCache(WALLET_A.toLowerCase()))?.lastError,
         3,
       ),
       true,
@@ -630,7 +629,7 @@ async function run() {
   });
 
   await test("bonus: Base verification read-only complete", async () => {
-    saveCompleteWalletCache(WALLET_A.toLowerCase(), 100, Date.now());
+    await saveCompleteWalletCache(WALLET_A.toLowerCase(), 100, Date.now());
     const items = [makeItem({ attempt_id: 3 })];
     const { fetchImpl } = makeFetch(
       new Map([[1, pageResponse({ page: 1, total: 1, items })]]),

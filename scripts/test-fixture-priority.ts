@@ -32,20 +32,24 @@ function restoreNodeEnv(prev: string | undefined) {
   else process.env.NODE_ENV = prev;
 }
 
-function setupTempDb(): { dir: string; prevNodeEnv: string | undefined } {
-  closeDatabase();
+async function setupTempDb(): Promise<{ dir: string; prevNodeEnv: string | undefined }> {
+  await closeDatabase();
+  delete process.env.TURSO_AUTH_TOKEN;
+  delete process.env.AXIS_INDEX_DB_PATH;
   const prevNodeEnv = ensureNonProductionNodeEnv();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "axis-fixture-prio-"));
-  process.env.AXIS_INDEX_DB_PATH = path.join(dir, "test.db");
-  openDatabase();
+  process.env.TURSO_DATABASE_URL = ":memory:";
+  await openDatabase();
   return { dir, prevNodeEnv };
 }
 
-function teardown(dir: string, prevNodeEnv: string | undefined) {
-  closeDatabase();
-  fs.rmSync(dir, { recursive: true, force: true });
+async function teardown(dir: string, prevNodeEnv: string | undefined) {
+  await closeDatabase();
+  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* win lock */ }
   delete process.env.AXIS_INDEX_DB_PATH;
   delete process.env.AXIS_USE_DEV_FIXTURE;
+  delete process.env.TURSO_DATABASE_URL;
+  delete process.env.TURSO_AUTH_TOKEN;
   restoreNodeEnv(prevNodeEnv);
 }
 
@@ -82,7 +86,7 @@ async function run() {
   let failed = 0;
 
   async function test(name: string, fn: () => Promise<void>) {
-    const { dir, prevNodeEnv } = setupTempDb();
+    const { dir, prevNodeEnv } = await setupTempDb();
     try {
       await fn();
       passed += 1;
@@ -92,7 +96,7 @@ async function run() {
       console.error(`FAIL  ${name}`);
       console.error(err);
     } finally {
-      teardown(dir, prevNodeEnv);
+      await teardown(dir, prevNodeEnv);
     }
   }
 
@@ -122,14 +126,14 @@ async function run() {
       "development-fixture",
     );
     assert.ok(hubCalls >= 1);
-    assert.ok(getHubWalletCache(REFERENCE_WALLET.toLowerCase()));
+    assert.ok(await getHubWalletCache(REFERENCE_WALLET.toLowerCase()));
     // Incomplete or complete — but not the old 776 fixture snapshot
     assert.notEqual(result.profile.analytics.summary.onChainContributions, 776);
   });
 
   await test("B) reference, incomplete Hub cache → resume, not fixture", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "true";
-    persistHubPageProgress(REFERENCE_WALLET.toLowerCase(), {
+    await persistHubPageProgress(REFERENCE_WALLET.toLowerCase(), {
       records: Array.from({ length: 100 }, (_, i) =>
         parseHubAttemptItem(makeItem(8000 - i))!,
       ),
@@ -171,7 +175,7 @@ async function run() {
 
   await test("C) reference, complete Hub cache → real Hub profile", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "true";
-    persistHubPageProgress(REFERENCE_WALLET.toLowerCase(), {
+    await persistHubPageProgress(REFERENCE_WALLET.toLowerCase(), {
       records: [
         parseHubAttemptItem(makeItem(1, "ab".repeat(32)))!,
         parseHubAttemptItem(makeItem(2, null))!,

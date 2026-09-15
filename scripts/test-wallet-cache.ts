@@ -69,22 +69,28 @@ function makeLog(opts: {
   } as Log;
 }
 
-function setupTempDb(): string {
-  closeDatabase();
+async function setupTempDb(): Promise<string> {
+  await closeDatabase();
+  if (process.env.NODE_ENV === "production") {
+    process.env.NODE_ENV = "test";
+  }
+  delete process.env.TURSO_AUTH_TOKEN;
+  delete process.env.AXIS_INDEX_DB_PATH;
+  process.env.TURSO_DATABASE_URL = ":memory:";
   globalThis.__axisWalletMaxLogRange = null;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "axis-wallet-cache-"));
-  const dbPath = path.join(dir, "test.db");
-  process.env.AXIS_INDEX_DB_PATH = dbPath;
-  openDatabase();
+  await openDatabase();
   return dir;
 }
 
-function teardownTempDb(dir: string) {
-  closeDatabase();
-  fs.rmSync(dir, { recursive: true, force: true });
+async function teardownTempDb(dir: string) {
+  await closeDatabase();
+  try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* win lock */ }
   delete process.env.AXIS_INDEX_DB_PATH;
   delete process.env.AXIS_START_BLOCK;
   delete process.env.BASE_LOG_CHUNK_SIZE;
+  delete process.env.TURSO_DATABASE_URL;
+  delete process.env.TURSO_AUTH_TOKEN;
   globalThis.__axisWalletMaxLogRange = null;
 }
 
@@ -99,7 +105,7 @@ async function run() {
   };
 
   async function test(name: string, fn: () => Promise<void> | void) {
-    const dir = setupTempDb();
+    const dir = await setupTempDb();
     const prevFixture = process.env.AXIS_USE_DEV_FIXTURE;
     try {
       await fn();
@@ -112,7 +118,7 @@ async function run() {
     } finally {
       if (prevFixture === undefined) delete process.env.AXIS_USE_DEV_FIXTURE;
       else process.env.AXIS_USE_DEV_FIXTURE = prevFixture;
-      teardownTempDb(dir);
+      await teardownTempDb(dir);
     }
   }
 
@@ -145,7 +151,7 @@ async function run() {
   await test("A) reference wallet with complete cache prefers real data over fixture", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "true";
     const addr = REFERENCE_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "5965276",
         taskId: "5615",
@@ -180,7 +186,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 51098001);
+    await saveCompleteWalletCache(addr, 51098001);
 
     const result = await loadProfileData(REFERENCE_WALLET, {
       skipMetadata: true,
@@ -196,13 +202,13 @@ async function run() {
     assert.equal(result.profile.analytics.summary.onChainContributions, 3);
     assert.notEqual(result.profile.analytics.summary.onChainContributions, 776);
     assert.equal(result.profile.hubTrajectories, 839);
-    assert.equal(getCachedWalletEvents(addr).length, 3);
+    assert.equal(await getCachedWalletEvents(addr).length, 3);
   });
 
   await test("E) Hub endpoint success populates hubTrajectories", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "1",
         taskId: "1",
@@ -215,7 +221,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 100);
+    await saveCompleteWalletCache(addr, 100);
 
     const result = await loadProfileData(TEST_WALLET, {
       skipMetadata: true,
@@ -233,7 +239,7 @@ async function run() {
   await test("F) Hub endpoint failure leaves hubTrajectories null; profile loads", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "1",
         taskId: "1",
@@ -246,7 +252,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 100);
+    await saveCompleteWalletCache(addr, 100);
 
     const result = await loadProfileData(TEST_WALLET, {
       skipMetadata: true,
@@ -354,13 +360,13 @@ async function run() {
     assert.equal(result.profile.indexStatus.dataSource, "live-wallet-scan");
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
     assert.equal(result.profile.analytics.summary.onChainContributions, 1);
-    assert.equal(getWalletCache(TEST_WALLET.toLowerCase())?.status, "complete");
+    assert.equal(await getWalletCache(TEST_WALLET.toLowerCase())?.status, "complete");
   });
 
   await test("cache hit with caught-up head returns wallet-cache", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "9",
         taskId: "7",
@@ -373,7 +379,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 250);
+    await saveCompleteWalletCache(addr, 250);
 
     let getLogsCalls = 0;
     const result = await loadProfileData(TEST_WALLET, {
@@ -396,7 +402,7 @@ async function run() {
   await test("incremental refresh scans only missing range and dedupes", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "1",
         taskId: "1",
@@ -409,7 +415,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 100);
+    await saveCompleteWalletCache(addr, 100);
 
     const ranges: Array<{ from: number; to: number }> = [];
     const newLog = makeLog({
@@ -448,13 +454,13 @@ async function run() {
     if (!result.ok) return;
     assert.equal(ranges[0]!.from, 101);
     assert.equal(result.profile.analytics.summary.onChainContributions, 2);
-    assert.equal(getCachedWalletEvents(addr).length, 2);
+    assert.equal(await getCachedWalletEvents(addr).length, 2);
   });
 
   await test("refresh failure returns existing complete cache as stale", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "5",
         taskId: "5",
@@ -467,7 +473,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 50);
+    await saveCompleteWalletCache(addr, 50);
 
     const result = await loadProfileData(TEST_WALLET, {
       skipMetadata: true,
@@ -483,7 +489,7 @@ async function run() {
     assert.equal(result.profile.indexStatus.dataSource, "wallet-cache");
     assert.equal(result.profile.indexStatus.freshness, "stale");
     assert.equal(result.profile.analytics.summary.onChainContributions, 1);
-    assert.equal(getWalletCache(addr)?.lastScannedBlock, 50);
+    assert.equal((await getWalletCache(addr))?.lastScannedBlock, 50);
   });
 
   // ── Resumable historical scan ────────────────────────────────────────
@@ -533,7 +539,7 @@ async function run() {
     if (!result.ok) return;
 
     // If somehow completed in one go due to timing, still assert invariants.
-    const cache = getWalletCache(TEST_WALLET.toLowerCase());
+    const cache = await getWalletCache(TEST_WALLET.toLowerCase());
     assert.ok(cache);
 
     if (result.profile.indexStatus.scanStatus === "incomplete") {
@@ -545,7 +551,7 @@ async function run() {
       assert.equal(cache!.status, "incomplete");
       assert.equal(cache!.targetBlock, 150);
       assert.ok(cache!.lastScannedBlock >= 109);
-      assert.ok(getCachedWalletEvents(TEST_WALLET.toLowerCase()).length >= 1);
+      assert.ok(await getCachedWalletEvents(TEST_WALLET.toLowerCase()).length >= 1);
     } else {
       // Fast machine completed whole window — still valid complete path
       assert.equal(cache!.status, "complete");
@@ -559,7 +565,7 @@ async function run() {
 
     const addr = TEST_WALLET.toLowerCase();
     // Seed incomplete checkpoint as if first request saved through 119
-    persistIncompleteRangeProgress(
+    await persistIncompleteRangeProgress(
       addr,
       [
         {
@@ -615,11 +621,11 @@ async function run() {
     assert.ok(historical.length >= 1);
     assert.ok(historical.every((r) => r.from >= 120 && r.to <= 150));
     // Original target finished → complete; head 498 may trigger incremental
-    assert.equal(getWalletCache(addr)?.status, "complete");
+    assert.equal((await getWalletCache(addr))?.status, "complete");
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
     assert.equal(result.profile.analytics.summary.onChainContributions, 2);
     // Events from partial + resume deduped
-    assert.equal(getCachedWalletEvents(addr).length, 2);
+    assert.equal(await getCachedWalletEvents(addr).length, 2);
   });
 
   await test("failed range does not advance checkpoint", async () => {
@@ -628,7 +634,7 @@ async function run() {
     process.env.BASE_LOG_CHUNK_SIZE = "10";
 
     const addr = TEST_WALLET.toLowerCase();
-    persistIncompleteRangeProgress(addr, [], 109, 150);
+    await persistIncompleteRangeProgress(addr, [], 109, 150);
 
     let calls = 0;
     const result = await loadProfileData(TEST_WALLET, {
@@ -646,8 +652,8 @@ async function run() {
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "incomplete");
     assert.equal(result.profile.indexStatus.canResume, true);
-    assert.equal(getWalletCache(addr)?.lastScannedBlock, 109);
-    assert.equal(getWalletCache(addr)?.targetBlock, 150);
+    assert.equal((await getWalletCache(addr))?.lastScannedBlock, 109);
+    assert.equal((await getWalletCache(addr))?.targetBlock, 150);
     assert.ok(calls >= 1);
   });
 
@@ -655,7 +661,7 @@ async function run() {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     process.env.AXIS_START_BLOCK = "100";
     const addr = TEST_WALLET.toLowerCase();
-    persistIncompleteRangeProgress(
+    await persistIncompleteRangeProgress(
       addr,
       [
         {
@@ -695,8 +701,8 @@ async function run() {
 
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    assert.equal(getWalletCache(addr)?.status, "complete");
-    assert.equal(getWalletCache(addr)?.targetBlock, null);
+    assert.equal((await getWalletCache(addr))?.status, "complete");
+    assert.equal((await getWalletCache(addr))?.targetBlock, null);
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
     assert.ok(result.profile.analytics.summary.onChainContributions >= 2);
   });
@@ -706,7 +712,7 @@ async function run() {
     process.env.AXIS_START_BLOCK = "100";
     process.env.BASE_LOG_CHUNK_SIZE = "20";
     const addr = TEST_WALLET.toLowerCase();
-    persistIncompleteRangeProgress(addr, [], 119, 150);
+    await persistIncompleteRangeProgress(addr, [], 119, 150);
 
     const maxTo: number[] = [];
     await loadProfileData(TEST_WALLET, {
@@ -722,7 +728,7 @@ async function run() {
 
     // Historical resume must not request beyond original target 150
     // (incremental after complete may go further — only assert during incomplete portion)
-    const cache = getWalletCache(addr);
+    const cache = await getWalletCache(addr);
     if (cache?.status === "incomplete") {
       assert.ok(maxTo.every((t) => t <= 150));
       assert.equal(cache.targetBlock, 150);
@@ -738,7 +744,7 @@ async function run() {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     process.env.AXIS_START_BLOCK = "100";
     const addr = TEST_WALLET.toLowerCase();
-    persistIncompleteRangeProgress(
+    await persistIncompleteRangeProgress(
       addr,
       [
         {
@@ -776,7 +782,7 @@ async function run() {
     assert.equal(result.profile.contributions.length, 0);
     assert.equal(result.profile.empty, true);
     // Events still on disk for later completion
-    assert.equal(getCachedWalletEvents(addr).length, 1);
+    assert.equal(await getCachedWalletEvents(addr).length, 1);
   });
 
   // ── Block timestamps ─────────────────────────────────────────────────
@@ -858,7 +864,7 @@ async function run() {
     assert.equal(ok.profile.analytics.summary.onChainContributions, 1);
     assert.equal(ok.profile.contributions[0]!.timestamp, 1_710_000_000);
     assert.equal(
-      getCachedWalletEvents(TEST_WALLET.toLowerCase())[0]!.timestamp,
+      await getCachedWalletEvents(TEST_WALLET.toLowerCase())[0]!.timestamp,
       1_710_000_000,
     );
 
@@ -892,7 +898,7 @@ async function run() {
     assert.equal(fail.profile.analytics.summary.onChainContributions, 1);
     assert.equal(fail.profile.contributions[0]!.timestamp, null);
     assert.equal(
-      getCachedWalletEvents(OTHER.toLowerCase())[0]!.timestamp,
+      await getCachedWalletEvents(OTHER.toLowerCase())[0]!.timestamp,
       null,
     );
   });
@@ -909,7 +915,7 @@ async function run() {
       "../src/lib/block-timestamps"
     );
 
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "1",
         taskId: "1",
@@ -933,7 +939,7 @@ async function run() {
         timestamp: 1_720_000_000,
       },
     ]);
-    saveCompleteWalletCache(addr, 901);
+    await saveCompleteWalletCache(addr, 901);
 
     assert.deepEqual(listDistinctBlocksMissingTimestamps(addr), [900]);
     assert.equal(countWalletEventsMissingTimestamps(addr), 1);
@@ -941,7 +947,7 @@ async function run() {
     const changed = applyBlockTimestampToWalletEvents(900, 1_721_000_000, addr);
     assert.equal(changed, 1);
     assert.equal(countWalletEventsMissingTimestamps(addr), 0);
-    assert.equal(getCachedWalletEvents(addr).find((e) => e.blockNumber === 900)?.timestamp, 1_721_000_000);
+    assert.equal(await getCachedWalletEvents(addr).find((e) => e.blockNumber === 900)?.timestamp, 1_721_000_000);
 
     let calls = 0;
     const already = await attachBlockTimestamps(
@@ -973,7 +979,7 @@ async function run() {
   await test("F+G) profile maps DB timestamp; null stays null", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "1",
         taskId: "1",
@@ -997,7 +1003,7 @@ async function run() {
         timestamp: null,
       },
     ]);
-    saveCompleteWalletCache(addr, 201);
+    await saveCompleteWalletCache(addr, 201);
 
     const result = await loadProfileData(TEST_WALLET, {
       skipMetadata: true,
@@ -1030,7 +1036,7 @@ async function run() {
   await test("I) backfill helpers do not call getLogs / historical scan", async () => {
     process.env.AXIS_USE_DEV_FIXTURE = "false";
     const addr = TEST_WALLET.toLowerCase();
-    upsertWalletEvents(addr, [
+    await upsertWalletEvents(addr, [
       {
         dataId: "1",
         taskId: "1",
@@ -1055,7 +1061,7 @@ async function run() {
       fetchBatch: async () => new Map([[777, 1_740_000_000]]),
     });
     applyBlockTimestampToWalletEvents(777, map.get(777)!, addr);
-    assert.equal(getCachedWalletEvents(addr)[0]!.timestamp, 1_740_000_000);
+    assert.equal(await getCachedWalletEvents(addr)[0]!.timestamp, 1_740_000_000);
     // No loadProfileData / getLogs involved — timestamp enrichment only.
   });
 

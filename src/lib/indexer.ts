@@ -447,7 +447,7 @@ async function resolveTimestamps(
   stats: IndexerStats,
 ): Promise<IndexedRecord[]> {
   const uniqueBlocks = [...new Set(records.map((r) => r.blockNumber))];
-  const cached = getCachedBlockTimestamps(uniqueBlocks);
+  const cached = await getCachedBlockTimestamps(uniqueBlocks);
   const missing = uniqueBlocks.filter((bn) => !cached.has(bn));
   const timestamps = new Map(cached);
 
@@ -484,7 +484,7 @@ async function resolveTimestamps(
       return null;
     });
 
-    upsertBlockTimestamps(fresh);
+    await upsertBlockTimestamps(fresh);
   }
 
   return records.map((r) => ({
@@ -502,7 +502,7 @@ export async function ensureRecordTimestamps(
   const client = createClient();
   const stats = emptyStats(0, 0);
   const hydrated = await resolveTimestamps(client, needing, stats);
-  upsertAxisRecords(hydrated);
+  await upsertAxisRecords(hydrated);
 
   const byKey = new Map<string, IndexedRecord>(
     hydrated.map((r) => [`${r.transactionHash}-${r.logIndex}`, r]),
@@ -557,7 +557,7 @@ export async function indexBlockRange(
     markComplete?: boolean;
   },
 ): Promise<IndexerStats> {
-  openDatabase();
+  await openDatabase();
   const started = Date.now();
   const stats = emptyStats(fromBlock, toBlock);
   if (fromBlock > toBlock) {
@@ -569,7 +569,7 @@ export async function indexBlockRange(
 
   // Advance contiguously; chunk size adapts to provider limits and event density.
   let cursor = fromBlock;
-  let eventsStored = countAxisRecords();
+  let eventsStored = await countAxisRecords();
   let densityChunk = getDiscoveredMaxRange() ?? getLogChunkFallback();
 
   while (cursor <= toBlock) {
@@ -587,13 +587,13 @@ export async function indexBlockRange(
       .map(decodeLog)
       .filter((r): r is IndexedRecord => r !== null);
 
-    upsertAxisRecords(decoded);
+    await upsertAxisRecords(decoded);
 
     // Best-effort timestamps — never block contiguous log progress on public RPC.
     if (decoded.length > 0 && decoded.length <= 200) {
       try {
         const withTs = await resolveTimestamps(client, decoded, stats);
-        upsertAxisRecords(withTs);
+        await upsertAxisRecords(withTs);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.warn(
@@ -602,7 +602,7 @@ export async function indexBlockRange(
       }
     }
 
-    setLastIndexedBlock(end);
+    await setLastIndexedBlock(end);
     eventsStored += decoded.length;
     stats.newEvents += decoded.length;
 
@@ -628,12 +628,12 @@ export async function indexBlockRange(
     cursor = end + 1;
   }
 
-  setLastIndexedBlock(toBlock);
+  await setLastIndexedBlock(toBlock);
 
   if (options?.markComplete) {
-    markInitialIndexComplete(Date.now());
+    await markInitialIndexComplete(Date.now());
   } else {
-    setLastSyncAt(Date.now());
+    await setLastSyncAt(Date.now());
   }
 
   stats.durationMs = Date.now() - started;
@@ -652,8 +652,8 @@ export async function syncAxisIndex(options?: {
   }
 
   const promise = (async (): Promise<SyncResult> => {
-    openDatabase();
-    const state = getIndexState();
+    await openDatabase();
+    const state = await getIndexState();
     if (!state.initialIndexComplete && !options?.force) {
       return {
         ...emptyStats(0, 0),
@@ -665,7 +665,7 @@ export async function syncAxisIndex(options?: {
     const safeHead = await getSafeChainHead();
     const from = state.lastIndexedBlock + 1;
     if (from > safeHead) {
-      setLastSyncAt(Date.now());
+      await setLastSyncAt(Date.now());
       return {
         ...emptyStats(from, safeHead),
         skipped: true,
@@ -675,7 +675,7 @@ export async function syncAxisIndex(options?: {
     }
 
     const stats = await indexBlockRange(from, safeHead, { markComplete: false });
-    setLastSyncAt(Date.now());
+    await setLastSyncAt(Date.now());
     return { ...stats, skipped: false };
   })().finally(() => {
     globalThis.__axisIndexSyncInflight = undefined;
@@ -692,8 +692,8 @@ export async function runFullIndex(options?: {
       : never
     : never;
 }): Promise<IndexerStats> {
-  openDatabase();
-  const state = getIndexState();
+  await openDatabase();
+  const state = await getIndexState();
   const start = getAxisStartBlock();
   const safeHead = await getSafeChainHead();
 
@@ -707,7 +707,7 @@ export async function runFullIndex(options?: {
   }
 
   if (from > safeHead) {
-    markInitialIndexComplete(Date.now());
+    await markInitialIndexComplete(Date.now());
     const stats = emptyStats(from, safeHead);
     stats.durationMs = 0;
     return stats;
@@ -715,10 +715,7 @@ export async function runFullIndex(options?: {
 
   // Seed last_indexed to start-1 before first write so resume semantics are clear
   if (state.lastIndexedBlock < start - 1) {
-    const db = openDatabase();
-    db.prepare(
-      `UPDATE index_state SET last_indexed_block = ? WHERE id = 1`,
-    ).run(start - 1);
+    await setLastIndexedBlock(start - 1);
   }
 
   return indexBlockRange(from, safeHead, {

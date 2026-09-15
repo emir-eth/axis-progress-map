@@ -372,11 +372,11 @@ function recordsFromPage(items: unknown[]): HubAttemptRecord[] {
   return out;
 }
 
-function snapshotFromCache(
+async function snapshotFromCache(
   cache: HubWalletCacheRow,
   extras?: Partial<HubEnsureResult>,
-): HubEnsureResult {
-  const fetched = countHubAttempts(cache.address);
+): Promise<HubEnsureResult> {
+  const fetched = await countHubAttempts(cache.address);
   return {
     status: cache.status,
     totalAttempts: cache.totalAttempts,
@@ -395,15 +395,15 @@ function snapshotFromCache(
 }
 
 /** Cached unique rows must equal the Hub snapshot total to be complete. */
-export function isHubCacheCountReconciled(
+export async function isHubCacheCountReconciled(
   addressLower: string,
   totalAttempts: number,
-): boolean {
+): Promise<boolean> {
   if (totalAttempts < 0) return false;
-  return countHubAttempts(addressLower) === totalAttempts;
+  return (await countHubAttempts(addressLower)) === totalAttempts;
 }
 
-function markHubIncompleteMismatch(
+async function markHubIncompleteMismatch(
   addressLower: string,
   opts: {
     totalAttempts: number;
@@ -412,8 +412,8 @@ function markHubIncompleteMismatch(
     nowMs: number;
     warning?: string;
   },
-): void {
-  persistHubPageProgress(addressLower, {
+): Promise<void> {
+  await persistHubPageProgress(addressLower, {
     records: [],
     totalAttempts: opts.totalAttempts,
     totalPages: opts.totalPages,
@@ -423,7 +423,7 @@ function markHubIncompleteMismatch(
     nowMs: opts.nowMs,
   });
   if (opts.warning) {
-    markHubWalletCacheError(addressLower, opts.warning, opts.nowMs);
+    await markHubWalletCacheError(addressLower, opts.warning, opts.nowMs);
   }
 }
 
@@ -481,14 +481,14 @@ export async function ensureHubAttemptHistory(
     livePages: number,
     reason: string,
   ): Promise<boolean> => {
-    const before = countHubAttempts(addressLower);
+    const before = await countHubAttempts(addressLower);
     if (before <= liveTotal) {
-      return finalizeComplete(liveTotal, livePages, livePages);
+      return await finalizeComplete(liveTotal, livePages, livePages);
     }
     warnings.push(
       `Hub cache overcount (${before} rows vs live total ${liveTotal}); rebuilding (${reason}).`,
     );
-    clearHubAttemptsForAddress(addressLower, now());
+    await clearHubAttemptsForAddress(addressLower, now());
     reconciliationUsed = false;
     reconciliationExhausted = false;
 
@@ -503,7 +503,7 @@ export async function ensureHubAttemptHistory(
       const res = await fetchPage(p);
       if (!res.ok) {
         if (res.rateLimited) rateLimited = true;
-        markHubWalletCacheError(addressLower, res.error, now());
+        await markHubWalletCacheError(addressLower, res.error, now());
         warnings.push(res.error);
         break;
       }
@@ -511,14 +511,14 @@ export async function ensureHubAttemptHistory(
       currentPages = res.page.total_pages;
       // If Hub total rose mid-rebuild above what we cleared for, keep going;
       // if it fell further, continue and finalize against the latest total.
-      if (countHubAttempts(addressLower) > currentTotal) {
+      if (await countHubAttempts(addressLower) > currentTotal) {
         // Should not happen mid-rebuild from empty — safety abort to incomplete.
         warnings.push(
-          `Hub rebuild produced overcount mid-pass (cached=${countHubAttempts(addressLower)} total=${currentTotal}).`,
+          `Hub rebuild produced overcount mid-pass (cached=${await countHubAttempts(addressLower)} total=${currentTotal}).`,
         );
         break;
       }
-      persistHubPageProgress(addressLower, {
+      await persistHubPageProgress(addressLower, {
         records: recordsFromPage(res.page.items),
         totalAttempts: currentTotal,
         totalPages: currentPages,
@@ -531,12 +531,12 @@ export async function ensureHubAttemptHistory(
       lastPage = p;
     }
 
-    if (finalizeComplete(currentTotal, currentPages, Math.max(lastPage, 0))) {
+    if (await finalizeComplete(currentTotal, currentPages, Math.max(lastPage, 0))) {
       return true;
     }
-    const cached = countHubAttempts(addressLower);
+    const cached = await countHubAttempts(addressLower);
     if (cached > currentTotal) {
-      markHubIncompleteMismatch(addressLower, {
+      await markHubIncompleteMismatch(addressLower, {
         totalAttempts: currentTotal,
         totalPages: currentPages,
         lastCompletedPage: Math.max(lastPage, 0),
@@ -547,7 +547,7 @@ export async function ensureHubAttemptHistory(
       return false;
     }
     // Under-count: leave incomplete for resume (do not mark exhausted).
-    persistHubPageProgress(addressLower, {
+    await persistHubPageProgress(addressLower, {
       records: [],
       totalAttempts: currentTotal,
       totalPages: currentPages,
@@ -560,14 +560,14 @@ export async function ensureHubAttemptHistory(
     return false;
   };
 
-  const finalizeComplete = (
+  const finalizeComplete = async (
     totalAttempts: number,
     totalPages: number,
     lastCompletedPage: number,
-  ): boolean => {
-    const fetched = countHubAttempts(addressLower);
+  ): Promise<boolean> => {
+    const fetched = await countHubAttempts(addressLower);
     if (fetched === totalAttempts) {
-      persistHubPageProgress(addressLower, {
+      await persistHubPageProgress(addressLower, {
         records: [],
         totalAttempts,
         totalPages,
@@ -594,7 +594,7 @@ export async function ensureHubAttemptHistory(
     reconciliationUsed = true;
 
     // Already exhausted for this snapshot — do not refetch forever.
-    const prior = getHubWalletCache(addressLower);
+    const prior = await getHubWalletCache(addressLower);
     if (
       !options?.forceFreshnessCheck &&
       isHubReconcileExhaustedForTotal(prior?.lastError, totalAttempts)
@@ -621,13 +621,13 @@ export async function ensureHubAttemptHistory(
       const res = await fetchPage(p);
       if (!res.ok) {
         if (res.rateLimited) rateLimited = true;
-        markHubWalletCacheError(addressLower, res.error, now());
+        await markHubWalletCacheError(addressLower, res.error, now());
         warnings.push(res.error);
         break;
       }
       liveTotal = res.page.total;
       livePages = res.page.total_pages;
-      persistHubPageProgress(addressLower, {
+      await persistHubPageProgress(addressLower, {
         records: recordsFromPage(res.page.items),
         totalAttempts: liveTotal,
         totalPages: livePages,
@@ -641,19 +641,19 @@ export async function ensureHubAttemptHistory(
 
     if (
       lastPage >= livePages &&
-      finalizeComplete(liveTotal, livePages, lastPage)
+      await finalizeComplete(liveTotal, livePages, lastPage)
     ) {
       return true;
     }
 
-    const cached = countHubAttempts(addressLower);
+    const cached = await countHubAttempts(addressLower);
     // Count already matches even if page cursor is short — treat as complete.
-    if (finalizeComplete(liveTotal, livePages, Math.max(lastPage, livePages))) {
+    if (await finalizeComplete(liveTotal, livePages, Math.max(lastPage, livePages))) {
       return true;
     }
 
     const exhaustedMsg = formatHubReconcileExhaustedError(liveTotal, cached);
-    markHubIncompleteMismatch(addressLower, {
+    await markHubIncompleteMismatch(addressLower, {
       totalAttempts: liveTotal,
       totalPages: livePages,
       lastCompletedPage: Math.max(lastPage, 0),
@@ -667,48 +667,48 @@ export async function ensureHubAttemptHistory(
     return false;
   };
 
-  let cache = getHubWalletCache(addressLower);
+  let cache = await getHubWalletCache(addressLower);
 
   // Heal: unique rows already match snapshot total → complete regardless of
   // page cursor (prevents ~99% stuck when last_completed_page < total_pages).
   if (
     cache &&
     cache.totalAttempts > 0 &&
-    isHubCacheCountReconciled(addressLower, cache.totalAttempts)
+    await isHubCacheCountReconciled(addressLower, cache.totalAttempts)
   ) {
     if (
       cache.status !== "complete" ||
       cache.lastCompletedPage < cache.totalPages
     ) {
-      finalizeComplete(
+      await finalizeComplete(
         cache.totalAttempts,
         cache.totalPages,
         Math.max(cache.lastCompletedPage, cache.totalPages),
       );
-      cache = getHubWalletCache(addressLower)!;
+      cache = (await getHubWalletCache(addressLower))!;
     }
   }
 
   // Complete-but-mismatched caches must not be trusted — repair first.
   if (
     cache?.status === "complete" &&
-    !isHubCacheCountReconciled(addressLower, cache.totalAttempts)
+    !await isHubCacheCountReconciled(addressLower, cache.totalAttempts)
   ) {
     warnings.push(
-      `Hub cache marked complete with ${countHubAttempts(addressLower)} rows vs total ${cache.totalAttempts}; reconciling.`,
+      `Hub cache marked complete with ${await countHubAttempts(addressLower)} rows vs total ${cache.totalAttempts}; reconciling.`,
     );
-    markHubIncompleteMismatch(addressLower, {
+    await markHubIncompleteMismatch(addressLower, {
       totalAttempts: cache.totalAttempts,
       totalPages: cache.totalPages,
       lastCompletedPage: cache.lastCompletedPage,
       nowMs: now(),
     });
     const ok = await reconcileOnce(cache.totalAttempts, cache.totalPages);
-    cache = getHubWalletCache(addressLower)!;
+    cache = (await getHubWalletCache(addressLower))!;
     return {
       status: ok ? "complete" : "incomplete",
       totalAttempts: cache.totalAttempts,
-      fetchedAttempts: countHubAttempts(addressLower),
+      fetchedAttempts: await countHubAttempts(addressLower),
       lastCompletedPage: cache.lastCompletedPage,
       totalPages: cache.totalPages,
       perPage: HUB_PER_PAGE,
@@ -725,20 +725,20 @@ export async function ensureHubAttemptHistory(
   // ── Complete + fresh + reconciled → serve immediately ────────────────
   if (
     cache?.status === "complete" &&
-    isHubCacheCountReconciled(addressLower, cache.totalAttempts) &&
+    await isHubCacheCountReconciled(addressLower, cache.totalAttempts) &&
     !options?.forceFreshnessCheck &&
     now() - cache.updatedAt <= maxAgeMs
   ) {
-    return snapshotFromCache(cache, { stale: false, fromCache: true });
+    return await snapshotFromCache(cache, { stale: false, fromCache: true });
   }
 
   // ── Complete + stale → lightweight freshness (page 1) ────────────────
   if (
     cache?.status === "complete" &&
-    isHubCacheCountReconciled(addressLower, cache.totalAttempts)
+    await isHubCacheCountReconciled(addressLower, cache.totalAttempts)
   ) {
     if (remaining() < 800) {
-      return snapshotFromCache(cache, {
+      return await snapshotFromCache(cache, {
         stale: true,
         warnings: ["Hub freshness check deferred — request budget exhausted."],
       });
@@ -747,8 +747,8 @@ export async function ensureHubAttemptHistory(
     const page1 = await fetchPage(1);
     if (!page1.ok) {
       if (page1.rateLimited) rateLimited = true;
-      markHubWalletCacheError(addressLower, page1.error, now());
-      return snapshotFromCache(cache, {
+      await markHubWalletCacheError(addressLower, page1.error, now());
+      return await snapshotFromCache(cache, {
         stale: true,
         httpRequests,
         rateLimited,
@@ -763,17 +763,17 @@ export async function ensureHubAttemptHistory(
     const pageRecords = recordsFromPage(page1.page.items);
 
     // Orphan / reshuffled Hub rows: cached unique attempts exceed live total.
-    if (countHubAttempts(addressLower) > liveTotal) {
+    if (await countHubAttempts(addressLower) > liveTotal) {
       const ok = await rebuildBecauseOvercount(
         liveTotal,
         livePages,
         "freshness-overcount",
       );
-      cache = getHubWalletCache(addressLower)!;
+      cache = (await getHubWalletCache(addressLower))!;
       return {
         status: ok ? "complete" : "incomplete",
         totalAttempts: liveTotal,
-        fetchedAttempts: countHubAttempts(addressLower),
+        fetchedAttempts: await countHubAttempts(addressLower),
         lastCompletedPage: cache?.lastCompletedPage ?? 0,
         totalPages: livePages,
         perPage: HUB_PER_PAGE,
@@ -788,7 +788,7 @@ export async function ensureHubAttemptHistory(
     }
 
     if (liveTotal === cache.totalAttempts) {
-      persistHubPageProgress(addressLower, {
+      await persistHubPageProgress(addressLower, {
         records: pageRecords,
         totalAttempts: liveTotal,
         totalPages: livePages,
@@ -797,10 +797,10 @@ export async function ensureHubAttemptHistory(
         status: "incomplete",
         nowMs: now(),
       });
-      if (finalizeComplete(liveTotal, livePages, Math.max(cache.lastCompletedPage, 1))) {
-        touchHubWalletCacheFreshness(addressLower, now());
-        cache = getHubWalletCache(addressLower)!;
-        return snapshotFromCache(cache, {
+      if (await finalizeComplete(liveTotal, livePages, Math.max(cache.lastCompletedPage, 1))) {
+        await touchHubWalletCacheFreshness(addressLower, now());
+        cache = (await getHubWalletCache(addressLower))!;
+        return await snapshotFromCache(cache, {
           httpRequests,
           stale: false,
           fromCache: true,
@@ -808,11 +808,11 @@ export async function ensureHubAttemptHistory(
         });
       }
       const ok = await reconcileOnce(liveTotal, livePages);
-      cache = getHubWalletCache(addressLower)!;
+      cache = (await getHubWalletCache(addressLower))!;
       return {
         status: ok ? "complete" : "incomplete",
         totalAttempts: liveTotal,
-        fetchedAttempts: countHubAttempts(addressLower),
+        fetchedAttempts: await countHubAttempts(addressLower),
         lastCompletedPage: cache.lastCompletedPage,
         totalPages: livePages,
         perPage: HUB_PER_PAGE,
@@ -830,17 +830,17 @@ export async function ensureHubAttemptHistory(
         `Hub reported a lower total (${liveTotal}) than cached (${cache.totalAttempts}). Keeping cached rows.`,
       );
       // Prefer rebuild when rows already exceed the new live total.
-      if (countHubAttempts(addressLower) > liveTotal) {
+      if (await countHubAttempts(addressLower) > liveTotal) {
         const ok = await rebuildBecauseOvercount(
           liveTotal,
           livePages,
           "hub-total-decreased",
         );
-        cache = getHubWalletCache(addressLower)!;
+        cache = (await getHubWalletCache(addressLower))!;
         return {
           status: ok ? "complete" : "incomplete",
           totalAttempts: liveTotal,
-          fetchedAttempts: countHubAttempts(addressLower),
+          fetchedAttempts: await countHubAttempts(addressLower),
           lastCompletedPage: cache?.lastCompletedPage ?? 0,
           totalPages: livePages,
           perPage: HUB_PER_PAGE,
@@ -853,7 +853,7 @@ export async function ensureHubAttemptHistory(
           reconciliationExhausted: ok ? false : reconciliationExhausted,
         };
       }
-      persistHubPageProgress(addressLower, {
+      await persistHubPageProgress(addressLower, {
         records: pageRecords,
         totalAttempts: liveTotal,
         totalPages: livePages,
@@ -862,16 +862,16 @@ export async function ensureHubAttemptHistory(
         status: "incomplete",
         nowMs: now(),
       });
-      if (finalizeComplete(liveTotal, livePages, cache.lastCompletedPage)) {
-        cache = getHubWalletCache(addressLower)!;
-        return snapshotFromCache(cache, { httpRequests, warnings, stale: false });
+      if (await finalizeComplete(liveTotal, livePages, cache.lastCompletedPage)) {
+        cache = (await getHubWalletCache(addressLower))!;
+        return await snapshotFromCache(cache, { httpRequests, warnings, stale: false });
       }
       const ok = await reconcileOnce(liveTotal, livePages);
-      cache = getHubWalletCache(addressLower)!;
+      cache = (await getHubWalletCache(addressLower))!;
       return {
         status: ok ? "complete" : "incomplete",
         totalAttempts: liveTotal,
-        fetchedAttempts: countHubAttempts(addressLower),
+        fetchedAttempts: await countHubAttempts(addressLower),
         lastCompletedPage: cache.lastCompletedPage,
         totalPages: livePages,
         perPage: HUB_PER_PAGE,
@@ -885,11 +885,11 @@ export async function ensureHubAttemptHistory(
     }
 
     // liveTotal > cached: newest-first incremental merge from page 1
-    const known = getKnownHubAttemptIds(addressLower);
+    const known = await getKnownHubAttemptIds(addressLower);
     let lastPage = 0;
     let hitBoundary = false;
 
-    const ingestPage = (pageNum: number, items: unknown[]) => {
+    const ingestPage = async (pageNum: number, items: unknown[]) => {
       const records = recordsFromPage(items);
       let newCount = 0;
       for (const r of records) {
@@ -899,7 +899,7 @@ export async function ensureHubAttemptHistory(
         }
       }
       if (records.length > 0 && newCount === 0) hitBoundary = true;
-      persistHubPageProgress(addressLower, {
+      await persistHubPageProgress(addressLower, {
         records,
         totalAttempts: liveTotal,
         totalPages: livePages,
@@ -912,7 +912,7 @@ export async function ensureHubAttemptHistory(
       return newCount;
     };
 
-    ingestPage(1, page1.page.items);
+    await ingestPage(1, page1.page.items);
     for (
       let p = 2;
       p <= livePages && !hitBoundary && remaining() > HUB_PAGE_TIMEOUT_MS;
@@ -922,28 +922,28 @@ export async function ensureHubAttemptHistory(
       if (!res.ok) {
         if (res.rateLimited) {
           rateLimited = true;
-          markHubWalletCacheError(addressLower, res.error, now());
+          await markHubWalletCacheError(addressLower, res.error, now());
           warnings.push(res.error);
           break;
         }
-        markHubWalletCacheError(addressLower, res.error, now());
+        await markHubWalletCacheError(addressLower, res.error, now());
         warnings.push(res.error);
         break;
       }
-      ingestPage(p, res.page.items);
+      await ingestPage(p, res.page.items);
       if (hitBoundary) break;
     }
 
     let complete =
       hitBoundary &&
-      isHubCacheCountReconciled(addressLower, liveTotal)
-        ? finalizeComplete(
+      await isHubCacheCountReconciled(addressLower, liveTotal)
+        ? await finalizeComplete(
             liveTotal,
             livePages,
             Math.max(lastPage, cache.lastCompletedPage),
           )
         : lastPage >= livePages
-          ? finalizeComplete(
+          ? await finalizeComplete(
               liveTotal,
               livePages,
               Math.max(lastPage, cache.lastCompletedPage),
@@ -954,11 +954,11 @@ export async function ensureHubAttemptHistory(
       complete = await reconcileOnce(liveTotal, livePages);
     }
 
-    cache = getHubWalletCache(addressLower)!;
+    cache = (await getHubWalletCache(addressLower))!;
     return {
       status: complete ? "complete" : "incomplete",
       totalAttempts: liveTotal,
-      fetchedAttempts: countHubAttempts(addressLower),
+      fetchedAttempts: await countHubAttempts(addressLower),
       lastCompletedPage: cache.lastCompletedPage,
       totalPages: livePages,
       perPage: HUB_PER_PAGE,
@@ -981,7 +981,7 @@ export async function ensureHubAttemptHistory(
   if (
     cache &&
     totalAttempts > 0 &&
-    countHubAttempts(addressLower) > totalAttempts &&
+    await countHubAttempts(addressLower) > totalAttempts &&
     remaining() > HUB_PAGE_TIMEOUT_MS
   ) {
     const ok = await rebuildBecauseOvercount(
@@ -989,11 +989,11 @@ export async function ensureHubAttemptHistory(
       Math.max(totalPages, 1),
       "incomplete-overcount",
     );
-    cache = getHubWalletCache(addressLower)!;
+    cache = (await getHubWalletCache(addressLower))!;
     return {
       status: ok ? "complete" : "incomplete",
       totalAttempts: cache?.totalAttempts ?? totalAttempts,
-      fetchedAttempts: countHubAttempts(addressLower),
+      fetchedAttempts: await countHubAttempts(addressLower),
       lastCompletedPage: cache?.lastCompletedPage ?? 0,
       totalPages: cache?.totalPages ?? totalPages,
       perPage: HUB_PER_PAGE,
@@ -1012,7 +1012,7 @@ export async function ensureHubAttemptHistory(
       return {
         status: "incomplete",
         totalAttempts,
-        fetchedAttempts: countHubAttempts(addressLower),
+        fetchedAttempts: await countHubAttempts(addressLower),
         lastCompletedPage: lastCompleted,
         totalPages,
         perPage: HUB_PER_PAGE,
@@ -1028,11 +1028,11 @@ export async function ensureHubAttemptHistory(
     const page1 = await fetchPage(1);
     if (!page1.ok) {
       if (page1.rateLimited) rateLimited = true;
-      if (cache) markHubWalletCacheError(addressLower, page1.error, now());
+      if (cache) await markHubWalletCacheError(addressLower, page1.error, now());
       return {
         status: "incomplete",
         totalAttempts,
-        fetchedAttempts: countHubAttempts(addressLower),
+        fetchedAttempts: await countHubAttempts(addressLower),
         lastCompletedPage: lastCompleted,
         totalPages,
         perPage: HUB_PER_PAGE,
@@ -1048,7 +1048,7 @@ export async function ensureHubAttemptHistory(
     totalAttempts = page1.page.total;
     totalPages = page1.page.total_pages;
     const records = recordsFromPage(page1.page.items);
-    persistHubPageProgress(addressLower, {
+    await persistHubPageProgress(addressLower, {
       records,
       totalAttempts,
       totalPages,
@@ -1060,20 +1060,20 @@ export async function ensureHubAttemptHistory(
     lastCompleted = 1;
 
     if (totalPages <= 1) {
-      if (finalizeComplete(totalAttempts, totalPages, 1)) {
-        cache = getHubWalletCache(addressLower)!;
-        return snapshotFromCache(cache, {
+      if (await finalizeComplete(totalAttempts, totalPages, 1)) {
+        cache = (await getHubWalletCache(addressLower))!;
+        return await snapshotFromCache(cache, {
           httpRequests,
           fromCache: false,
           stale: false,
         });
       }
       const ok = await reconcileOnce(totalAttempts, totalPages);
-      cache = getHubWalletCache(addressLower)!;
+      cache = (await getHubWalletCache(addressLower))!;
       return {
         status: ok ? "complete" : "incomplete",
         totalAttempts,
-        fetchedAttempts: countHubAttempts(addressLower),
+        fetchedAttempts: await countHubAttempts(addressLower),
         lastCompletedPage: cache.lastCompletedPage,
         totalPages,
         perPage: HUB_PER_PAGE,
@@ -1097,11 +1097,11 @@ export async function ensureHubAttemptHistory(
     if (!res.ok) {
       if (res.rateLimited) {
         rateLimited = true;
-        markHubWalletCacheError(addressLower, res.error, now());
+        await markHubWalletCacheError(addressLower, res.error, now());
         warnings.push(res.error);
         break;
       }
-      markHubWalletCacheError(addressLower, res.error, now());
+      await markHubWalletCacheError(addressLower, res.error, now());
       warnings.push(res.error);
       break;
     }
@@ -1109,7 +1109,7 @@ export async function ensureHubAttemptHistory(
     totalAttempts = res.page.total;
     totalPages = res.page.total_pages;
     const records = recordsFromPage(res.page.items);
-    persistHubPageProgress(addressLower, {
+    await persistHubPageProgress(addressLower, {
       records,
       totalAttempts,
       totalPages,
@@ -1121,29 +1121,29 @@ export async function ensureHubAttemptHistory(
     lastCompleted = p;
   }
 
-  cache = getHubWalletCache(addressLower);
+  cache = await getHubWalletCache(addressLower);
   let complete = false;
   if (
     totalAttempts > 0 &&
-    isHubCacheCountReconciled(addressLower, totalAttempts)
+    await isHubCacheCountReconciled(addressLower, totalAttempts)
   ) {
-    complete = finalizeComplete(
+    complete = await finalizeComplete(
       totalAttempts,
       totalPages,
       Math.max(lastCompleted, totalPages),
     );
   } else if (totalPages > 0 && lastCompleted >= totalPages) {
-    complete = finalizeComplete(totalAttempts, totalPages, lastCompleted);
+    complete = await finalizeComplete(totalAttempts, totalPages, lastCompleted);
     if (!complete) {
       complete = await reconcileOnce(totalAttempts, totalPages);
     }
   }
 
-  cache = getHubWalletCache(addressLower);
+  cache = await getHubWalletCache(addressLower);
   return {
     status: complete ? "complete" : "incomplete",
     totalAttempts: cache?.totalAttempts ?? totalAttempts,
-    fetchedAttempts: countHubAttempts(addressLower),
+    fetchedAttempts: await countHubAttempts(addressLower),
     lastCompletedPage: cache?.lastCompletedPage ?? lastCompleted,
     totalPages: cache?.totalPages ?? totalPages,
     perPage: HUB_PER_PAGE,
@@ -1157,27 +1157,26 @@ export async function ensureHubAttemptHistory(
   };
 }
 
-export function loadHubContributions(
+export async function loadHubContributions(
   address: `0x${string}`,
-): HubAttemptContribution[] {
+): Promise<HubAttemptContribution[]> {
   const addressLower = address.toLowerCase();
-  return getCachedHubAttempts(addressLower).map((r) =>
-    hubRecordToContribution(address, r),
-  );
+  const rows = await getCachedHubAttempts(addressLower);
+  return rows.map((r) => hubRecordToContribution(address, r));
 }
 
 export function hubProgressPercent(result: HubEnsureResult): number {
   return computeHubFetchPercent(result.fetchedAttempts, result.totalAttempts);
 }
 
-export function countHubTxhashStats(addressLower: string): {
+export async function countHubTxhashStats(addressLower: string): Promise<{
   hubAttemptCount: number;
   trajectoryCount: number;
   unsignedAttemptCount: number;
   withTxhash: number;
   withoutTxhash: number;
-} {
-  const rows = getCachedHubAttempts(addressLower);
+}> {
+  const rows = await getCachedHubAttempts(addressLower);
   let trajectoryCount = 0;
   let unsignedAttemptCount = 0;
   for (const r of rows) {
