@@ -106,7 +106,7 @@ export function WalletEntryForm({
         <button
           type="submit"
           disabled={locked || (!isValid && trimmed.length > 0)}
-          className="inline-flex shrink-0 items-center gap-2 border-l border-inherit bg-ink px-3 font-mono text-[12px] tracking-[0.12em] text-bg transition hover:bg-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:text-[13px] sm:tracking-[0.14em]"
+          className="inline-flex shrink-0 cursor-pointer items-center gap-2 border-l border-inherit bg-ink px-3 font-mono text-[12px] tracking-[0.12em] text-bg transition hover:bg-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:text-[13px] sm:tracking-[0.14em]"
         >
           {m.wallet.submit}
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
