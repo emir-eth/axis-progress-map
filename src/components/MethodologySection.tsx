@@ -3,7 +3,7 @@
 export function MethodologySection() {
   return (
     <div>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 sm:gap-10">
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-10">
         {[
           {
             title: "Pull",
@@ -16,10 +16,6 @@ export function MethodologySection() {
           {
             title: "Split",
             body: "Signed vs unsigned from Hub",
-          },
-          {
-            title: "Check",
-            body: "Base on-chain if available",
           },
         ].map((step) => (
           <div key={step.title}>

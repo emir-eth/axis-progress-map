@@ -180,7 +180,7 @@ async function main() {
     assert.ok(left >= 0);
   });
 
-  await test("Hub-complete profile starts secondary Base verification", async () => {
+  await test("Hub-complete profile does not auto-start Base verification", async () => {
     const { persistHubPageProgress } = await import("../src/lib/db");
     const addr = TEST_WALLET.toLowerCase();
     await persistHubPageProgress(addr, {
@@ -261,8 +261,8 @@ async function main() {
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.dataSource, "hub-cache");
-    assert.ok(getLogsCalls > 0, "Base eth_getLogs should run after Hub");
-    assert.notEqual(result.profile.baseVerification.status, "none");
+    assert.equal(getLogsCalls, 0, "public profile must not call Base eth_getLogs");
+    assert.equal(result.profile.baseVerification.status, "none");
   });
 
   await test("concurrent incomplete writes never rewind checkpoint or demote complete", async () => {

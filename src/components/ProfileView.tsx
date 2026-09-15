@@ -8,14 +8,11 @@ import type { ProfileErrorResponse, ProfileResponse } from "@/types";
 import { formatPercent, formatScore, shortenAddress } from "@/lib/format";
 import { ASSETS } from "@/lib/assets";
 import {
-  BASE_MAX_SOFT_POLLS,
-  BASE_SOFT_POLL_DELAY_MS,
   PROFILE_RESUME_DELAY_MS,
   isResumeSessionExhausted,
   isScanIncompleteStatus,
   mergeProfileResponse,
   shouldScheduleAutoResume,
-  shouldScheduleBaseSoftPoll,
   shouldShowPrepPaused,
 } from "@/lib/profile-resume";
 import { SiteNav } from "./SiteNav";
@@ -28,7 +25,6 @@ import { ContributionExplorer } from "./ContributionExplorer";
 import { IndexFreshnessBadge } from "./IndexFreshnessBadge";
 import { DataCoverage } from "./DataCoverage";
 import { MethodologySection } from "./MethodologySection";
-import { BaseVerificationPanel } from "./BaseVerificationPanel";
 import { ShareCardCta } from "./ShareCardCta";
 import {
   HubPreparationView,
@@ -95,7 +91,6 @@ export function ProfileView({ address }: ProfileViewProps) {
   const fetchGenRef = useRef(0);
   const addressRef = useRef(address);
   const resumeCountRef = useRef(0);
-  const baseSoftPollCountRef = useRef(0);
   const sessionStartRef = useRef<number | null>(null);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -237,7 +232,6 @@ export function ProfileView({ address }: ProfileViewProps) {
   useEffect(() => {
     mountedRef.current = true;
     resumeCountRef.current = 0;
-    baseSoftPollCountRef.current = 0;
     sessionStartRef.current = Date.now();
     setPausedAuto(false);
     setReadyFlash(false);
@@ -338,37 +332,6 @@ export function ProfileView({ address }: ProfileViewProps) {
       setResumeScheduled(false);
     };
   }, [data, error, pausedAuto, softPaused, softLoading, resumeEpoch, fetchProfile]);
-
-  // Soft-continue secondary Base verification while Hub profile is already complete.
-  useEffect(() => {
-    if (!data || error || softLoading || softPaused || inFlightRef.current) {
-      return;
-    }
-    const hubIncomplete = isScanIncompleteStatus({
-      scanStatus: data.indexStatus.scanStatus,
-      dataSource: data.indexStatus.dataSource,
-    });
-    if (
-      !shouldScheduleBaseSoftPoll({
-        hubScanIncomplete: hubIncomplete,
-        baseStatus: data.baseVerification.status,
-        softPollCount: baseSoftPollCountRef.current,
-        pausedByUser: pausedAuto || softPaused,
-        fetchInFlight: inFlightRef.current || softLoading,
-      })
-    ) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      if (!mountedRef.current || inFlightRef.current) return;
-      if (baseSoftPollCountRef.current >= BASE_MAX_SOFT_POLLS) return;
-      baseSoftPollCountRef.current += 1;
-      void fetchProfile({ soft: true });
-    }, BASE_SOFT_POLL_DELAY_MS);
-
-    return () => window.clearTimeout(timer);
-  }, [data, error, pausedAuto, softPaused, softLoading, fetchProfile]);
 
   async function copyAddress() {
     try {
@@ -778,19 +741,10 @@ export function ProfileView({ address }: ProfileViewProps) {
               <MethodologySection />
             </section>
 
-            <section>
-              <SectionHeader
-                code="05 / BASE VERIFICATION"
-                title="Base verification"
-                subtitle="Independent on-chain check against public Base records. Hub activity remains the primary source."
-              />
-              <BaseVerificationPanel status={data.baseVerification} />
-            </section>
-
             {showHistory && (
               <section>
                 <SectionHeader
-                  code="06 / HISTORY"
+                  code="05 / HISTORY"
                   title="Contribution history"
                   subtitle="Your Hub attempts over time."
                 />
@@ -801,7 +755,7 @@ export function ProfileView({ address }: ProfileViewProps) {
             {showExplorer && (
               <section>
                 <SectionHeader
-                  code="07 / EXPLORER"
+                  code="06 / EXPLORER"
                   title="Contribution explorer"
                   subtitle="Every public Hub attempt for this wallet."
                 />
@@ -821,7 +775,6 @@ export function ProfileView({ address }: ProfileViewProps) {
               analytics={analytics}
               indexStatus={indexStatus}
               hubTxhash={data.hubTxhash}
-              baseVerification={data.baseVerification}
             />
           </div>
         )}

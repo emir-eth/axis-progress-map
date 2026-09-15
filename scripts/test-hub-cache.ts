@@ -364,26 +364,31 @@ async function run() {
     assert.equal(result.profile.indexStatus.canResume, false);
   });
 
-  await test("9. Hub complete + Base missing → full profile", async () => {
+  await test("9. Hub complete profile does not start Base scan", async () => {
     const items = [makeItem({ attempt_id: 1, score: 88 })];
     const { fetchImpl } = makeFetch(
       new Map([[1, pageResponse({ page: 1, total: 1, items })]]),
     );
+    let getLogsCalls = 0;
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
-      // Freeze Base: Hub must still render when secondary Base cannot run.
-      scanBudgetMs: 0,
+      getLogs: async () => {
+        getLogsCalls += 1;
+        return [];
+      },
+      getBlockNumber: async () => 1_000_000n,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
     assert.equal(result.profile.baseVerification.status, "none");
+    assert.equal(getLogsCalls, 0);
     assert.equal(result.profile.contributions.length, 1);
     assert.equal(result.profile.analytics.summary.onChainContributions, 1);
   });
 
-  await test("10. Base incomplete does not block Hub profile", async () => {
+  await test("10. Stale Base cache does not block Hub profile", async () => {
     const { ensureIncompleteWalletScan } = await import("../src/lib/db");
     await ensureIncompleteWalletScan(WALLET_A.toLowerCase(), 1, 100);
 
@@ -391,15 +396,22 @@ async function run() {
     const { fetchImpl } = makeFetch(
       new Map([[1, pageResponse({ page: 1, total: 1, items })]]),
     );
+    let getLogsCalls = 0;
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
-      scanBudgetMs: 0,
+      getLogs: async () => {
+        getLogsCalls += 1;
+        return [];
+      },
+      getBlockNumber: async () => 1_000_000n,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
-    assert.equal(result.profile.baseVerification.status, "incomplete");
+    // Public path always returns none — does not read/resume wallet_cache.
+    assert.equal(result.profile.baseVerification.status, "none");
+    assert.equal(getLogsCalls, 0);
     assert.equal(result.profile.contributions.length, 1);
   });
 
@@ -549,7 +561,6 @@ async function run() {
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
-      scanBudgetMs: 0,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
@@ -635,38 +646,43 @@ async function run() {
     assert.ok(calls <= 2);
   });
 
-  await test("bonus: Base verification read-only complete", async () => {
+  await test("bonus: Hub-complete profile ignores existing Base cache", async () => {
     await saveCompleteWalletCache(WALLET_A.toLowerCase(), 100, Date.now());
     const items = [makeItem({ attempt_id: 3 })];
     const { fetchImpl } = makeFetch(
       new Map([[1, pageResponse({ page: 1, total: 1, items })]]),
     );
+    let getLogsCalls = 0;
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
-      // Keep complete snapshot without live tip-up RPC in this unit test.
-      scanBudgetMs: 0,
+      getLogs: async () => {
+        getLogsCalls += 1;
+        return [];
+      },
+      getBlockNumber: async () => 1_000_000n,
     });
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    assert.equal(result.profile.baseVerification.status, "complete");
+    assert.equal(result.profile.baseVerification.status, "none");
+    assert.equal(getLogsCalls, 0);
   });
 
-  await test("bonus: Base RPC failure never blocks Hub profile", async () => {
+  await test("bonus: Base RPC injectors are never called on Hub profile", async () => {
     const items = [makeItem({ attempt_id: 11, score: 70 })];
     const { fetchImpl } = makeFetch(
       new Map([[1, pageResponse({ page: 1, total: 1, items })]]),
     );
     const { RpcUnavailableError } = await import("../src/lib/wallet-scan");
+    let getLogsCalls = 0;
     const result = await loadProfileData(WALLET_A, {
       fetchHubPages: fetchImpl,
       skipMetadata: true,
-      scanBudgetMs: 15_000,
-      resolveTimestamps: false,
       getBlockNumber: async () => {
         throw new RpcUnavailableError("rpc down");
       },
       getLogs: async () => {
+        getLogsCalls += 1;
         throw new RpcUnavailableError("rpc down");
       },
     });
@@ -675,10 +691,8 @@ async function run() {
     assert.equal(result.profile.indexStatus.scanStatus, "complete");
     assert.equal(result.profile.contributions.length, 1);
     assert.equal(result.profile.analytics.summary.onChainContributions, 1);
-    assert.ok(
-      result.profile.baseVerification.status === "none" ||
-        result.profile.baseVerification.status === "incomplete",
-    );
+    assert.equal(result.profile.baseVerification.status, "none");
+    assert.equal(getLogsCalls, 0);
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

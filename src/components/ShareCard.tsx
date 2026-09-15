@@ -27,7 +27,6 @@ interface ShareCardProps {
     withTxhash?: number;
     withoutTxhash?: number;
   } | null;
-  baseRecordCount?: number | null;
   /** Forwarded to the root for html-to-image capture. */
   cardRef?: Ref<HTMLDivElement>;
 }
@@ -52,10 +51,9 @@ export function ShareCard({
   analytics,
   identity,
   hubTxhash,
-  baseRecordCount,
   cardRef,
 }: ShareCardProps) {
-  const fields = deriveShareFields(analytics, { hubTxhash, baseRecordCount });
+  const fields = deriveShareFields(analytics, { hubTxhash });
   const hub = identity?.hubUsername?.trim() || undefined;
   const xHandle = identity?.xUsername?.trim() || undefined;
   const wallet = shortenAddress(address, 6);
@@ -64,9 +62,7 @@ export function ShareCard({
     Boolean(fields.topEnvironment) ||
     fields.metadataCoverage != null;
   const hasHubSplit =
-    fields.signedAttempts != null ||
-    fields.unsignedAttempts != null ||
-    fields.baseRecords != null;
+    fields.signedAttempts != null || fields.unsignedAttempts != null;
 
   return (
     <div
@@ -158,9 +154,6 @@ export function ShareCard({
       >
         <p style={{ ...mono, margin: 0, fontSize: 10, color: "#5C6058" }}>
           Hub / Public
-        </p>
-        <p style={{ ...mono, margin: "4px 0 0", fontSize: 10, color: "#5C6058" }}>
-          Base / Optional
         </p>
         <p style={{ ...mono, margin: "4px 0 0", fontSize: 10, color: "#5C6058" }}>
           Progress Map
@@ -457,12 +450,6 @@ export function ShareCard({
               <FooterStat
                 label="Unsigned"
                 value={String(fields.unsignedAttempts)}
-              />
-            )}
-            {fields.baseRecords != null && (
-              <FooterStat
-                label="Base"
-                value={String(fields.baseRecords)}
               />
             )}
           </div>

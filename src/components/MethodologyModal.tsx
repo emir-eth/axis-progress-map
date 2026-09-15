@@ -98,16 +98,6 @@ export function MethodologyModal({ open, onClose }: MethodologyModalProps) {
               → no invented skills.
             </p>
           </section>
-
-          <section>
-            <h3 className="mb-1 font-display text-base text-ink">
-              Base verification
-            </h3>
-            <p>
-              Optional on-chain check if I already have it. Hub totals still
-              lead; this never blocks the page.
-            </p>
-          </section>
         </div>
       </div>
     </div>

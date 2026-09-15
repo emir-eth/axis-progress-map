@@ -11,7 +11,6 @@ export function deriveShareFields(
       withTxhash?: number;
       withoutTxhash?: number;
     } | null;
-    baseRecordCount?: number | null;
   },
 ) {
   const { summary, coverage, skills, themes, metadataAvailable } = analytics;
@@ -50,9 +49,5 @@ export function deriveShareFields(
     metadataCoverage: showCoverage ? coverage.coveragePercent : undefined,
     signedAttempts: signed != null && signed >= 0 ? signed : undefined,
     unsignedAttempts: unsigned != null && unsigned >= 0 ? unsigned : undefined,
-    baseRecords:
-      extras?.baseRecordCount != null && extras.baseRecordCount > 0
-        ? extras.baseRecordCount
-        : undefined,
   };
 }

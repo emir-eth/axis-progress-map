@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { ArrowRight, Download, Pencil, Share2, X } from "lucide-react";
 import { toPng } from "html-to-image";
 import type {
-  BaseVerificationStatus,
   HubTxhashStats,
   IndexStatus,
   ProfileAnalytics,
@@ -31,7 +30,6 @@ interface ShareCardCtaProps {
   analytics: ProfileAnalytics;
   indexStatus: IndexStatus;
   hubTxhash?: HubTxhashStats | null;
-  baseVerification?: BaseVerificationStatus | null;
 }
 
 function isShareAllowed(status: IndexStatus): boolean {
@@ -142,7 +140,6 @@ export function ShareCardCta({
   analytics,
   indexStatus,
   hubTxhash = null,
-  baseVerification = null,
 }: ShareCardCtaProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<GeneratorStep>("details");
@@ -168,11 +165,7 @@ export function ShareCardCta({
   const titleId = useId();
 
   const canShare = isShareAllowed(indexStatus);
-  const baseRecordCount =
-    baseVerification?.status === "complete"
-      ? baseVerification.recordSubmittedCount
-      : null;
-  const fields = deriveShareFields(analytics, { hubTxhash, baseRecordCount });
+  const fields = deriveShareFields(analytics, { hubTxhash });
 
   useEffect(() => {
     setPortalReady(true);
@@ -486,7 +479,6 @@ export function ShareCardCta({
                           analytics={analytics}
                           identity={identity}
                           hubTxhash={hubTxhash}
-                          baseRecordCount={baseRecordCount}
                         />
                       </div>
                     </div>

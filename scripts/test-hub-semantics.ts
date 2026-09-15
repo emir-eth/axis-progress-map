@@ -346,7 +346,7 @@ async function main() {
     );
   });
 
-  await test("M) Base Records remain separate", () => {
+  await test("M) Share card does not surface Base records", () => {
     const analytics: ProfileAnalytics = {
       summary: {
         onChainContributions: 864,
@@ -371,11 +371,14 @@ async function main() {
         trajectoryCount: 836,
         unsignedAttemptCount: 28,
       },
-      baseRecordCount: 776,
     });
     assert.equal(fields.contributionCount, 864);
-    assert.equal(fields.baseRecords, 776);
-    assert.notEqual(fields.contributionCount, fields.baseRecords);
+    assert.equal(fields.signedAttempts, 836);
+    assert.equal(fields.unsignedAttempts, 28);
+    assert.equal(
+      (fields as { baseRecords?: number }).baseRecords,
+      undefined,
+    );
   });
 
   await test("preparation progress unchanged", () => {

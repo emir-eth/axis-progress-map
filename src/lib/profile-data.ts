@@ -11,9 +11,9 @@
  *
  * Fixture must never prevent a successful public Hub lookup.
  *
- * Base RecordSubmitted wallet_cache/scanner is secondary verification only —
- * started/resumed after Hub completes, using remaining request budget.
- * Never drives Trajectories / skills / Hub analytics.
+ * Base RecordSubmitted wallet_cache/scanner is disconnected from the public
+ * profile path. Infrastructure remains for possible later reuse and never
+ * drives Trajectories / skills / Hub analytics.
  *
  * No global contract index. No Etherscan/Blockscout/paid APIs.
  */
@@ -33,11 +33,6 @@ import {
   DatabaseConfigError,
   getHubWalletCache,
 } from "@/lib/db";
-import {
-  ensureBaseVerification,
-  readBaseVerification,
-  remainingBaseVerificationBudgetMs,
-} from "@/lib/base-verification";
 import {
   countHubTxhashStats,
   ensureHubAttemptHistory,
@@ -84,8 +79,8 @@ export interface ProfileLoadDeps {
   hubCacheMaxAgeMs?: number;
   now?: () => number;
   /**
-   * Optional Base RPC injectors for secondary verification (tests).
-   * Production uses wallet-scan defaults (BASE_RPC_URL).
+   * Unused on the public profile path. Kept so older tests/helpers can
+   * still pass injectors without starting a Base scan.
    */
   getLogs?: GetLogsFn;
   getBlockNumber?: GetBlockNumberFn;
@@ -123,42 +118,6 @@ function noneBaseVerification(): BaseVerificationStatus {
     recordSubmittedCount: null,
     lastVerifiedAt: null,
   };
-}
-
-async function runSecondaryBaseVerification(
-  address: Address,
-  addressLower: string,
-  started: number,
-  timings: ProfileTimings,
-  deps: ProfileLoadDeps,
-): Promise<BaseVerificationStatus> {
-  const budgetMs = remainingBaseVerificationBudgetMs(
-    started,
-    typeof deps.scanBudgetMs === "number" ? deps.scanBudgetMs : undefined,
-    deps.now?.() ?? Date.now(),
-  );
-  try {
-    const result = await ensureBaseVerification(address, {
-      budgetMs,
-      getLogs: deps.getLogs,
-      getBlockNumber: deps.getBlockNumber,
-      now: deps.now,
-      resolveTimestamps: deps.resolveTimestamps,
-      readOnly: budgetMs < 800,
-    });
-    timings.ethGetLogs = (timings.ethGetLogs ?? 0) + result.ethGetLogs;
-    return {
-      status: result.status,
-      recordSubmittedCount: result.recordSubmittedCount,
-      lastVerifiedAt: result.lastVerifiedAt,
-    };
-  } catch {
-    try {
-      return await readBaseVerification(addressLower);
-    } catch {
-      return noneBaseVerification();
-    }
-  }
 }
 
 function hasUsableHubProgress(
@@ -210,7 +169,7 @@ async function buildFixtureProfile(
   return profile;
 }
 
-/** Read-only Base verification snapshot — never starts a scan. */
+/** Read-only Base snapshot helper — not used by public profile loads. */
 export { readBaseVerification } from "@/lib/base-verification";
 
 function toHubStatus(result: HubEnsureResult): HubCacheStatus {
@@ -386,10 +345,9 @@ export async function loadProfileData(
 
   const addressLower = address.toLowerCase();
 
-  let baseVerification: BaseVerificationStatus;
+  const baseVerification = noneBaseVerification();
   let existing: Awaited<ReturnType<typeof getHubWalletCache>>;
   try {
-    baseVerification = await readBaseVerification(addressLower);
     const sqliteStarted = Date.now();
     existing = await getHubWalletCache(addressLower);
     timings.sqliteMs += Date.now() - sqliteStarted;
@@ -574,15 +532,6 @@ export async function loadProfileData(
   analytics.summary.onChainContributions = hub.totalAttempts;
   const warnings = [...hub.warnings, ...metaWarnings];
   const txStats: HubTxhashStats = await countHubTxhashStats(addressLower);
-
-  // Secondary Base verification — budgeted; resumes across requests via Turso.
-  baseVerification = await runSecondaryBaseVerification(
-    address,
-    addressLower,
-    started,
-    timings,
-    deps,
-  );
 
   timings.totalMs = Date.now() - started;
   const hubStatus = toHubStatus(hub);
