@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { ArrowUp } from "lucide-react";
+import { useLocale } from "./LocaleProvider";
 
 const SHOW_AFTER_PX = 420;
 
 export function BackToTop() {
+  const { messages: m } = useLocale();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function BackToTop() {
     <button
       type="button"
       onClick={goTop}
-      aria-label="Back to top"
+      aria-label={m.profile.backToTop}
       tabIndex={visible ? 0 : -1}
       aria-hidden={!visible}
       className={`fixed bottom-5 right-5 z-40 flex items-center gap-2 border border-ink bg-bg/95 px-3 py-2.5 text-ink shadow-[0_8px_24px_rgba(37,41,35,0.08)] backdrop-blur-sm transition-[opacity,transform,background-color,border-color,color] duration-300 hover:border-accent hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:bottom-7 sm:right-7 sm:px-3.5 ${

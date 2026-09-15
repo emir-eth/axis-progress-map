@@ -10,6 +10,7 @@ import type {
   ProfileAnalytics,
 } from "@/types";
 import { shortenAddress } from "@/lib/format";
+import type { Messages } from "@/lib/i18n";
 import {
   deriveShareFields,
   ShareCard,
@@ -17,6 +18,7 @@ import {
   SHARE_CARD_WIDTH,
   type ShareCardIdentity,
 } from "./ShareCard";
+import { useLocale } from "./LocaleProvider";
 
 const LS_HUB = "axis-share-hub-username";
 const LS_X = "axis-share-x-username";
@@ -76,17 +78,19 @@ function buildXIntentUrl(opts: {
   uniqueTasks: number;
   primarySkill?: string;
   profileUrl: string;
+  m: Messages;
 }): string {
+  const { m } = opts;
   const lines = [
-    "Checked my Axis Hub map — here’s what it looks like.",
+    m.share.tweetLine1,
     "",
-    `${opts.contributionCount} trajectories`,
-    `${opts.uniqueTasks} unique tasks`,
+    m.share.tweetTrajectories(opts.contributionCount),
+    m.share.tweetUniqueTasks(opts.uniqueTasks),
   ];
   if (opts.primarySkill) {
-    lines.push(`Top skill: ${opts.primarySkill}`);
+    lines.push(m.share.tweetTopSkill(opts.primarySkill));
   }
-  lines.push("", "My Axis Progress Map card ↓", "", opts.profileUrl);
+  lines.push("", m.share.tweetCard, "", opts.profileUrl);
 
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     lines.join("\n"),
@@ -141,6 +145,7 @@ export function ShareCardCta({
   indexStatus,
   hubTxhash = null,
 }: ShareCardCtaProps) {
+  const { messages: m } = useLocale();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<GeneratorStep>("details");
   const [hubInput, setHubInput] = useState("");
@@ -303,12 +308,12 @@ export function ShareCardCta({
       link.click();
     } catch (err) {
       setExportError(
-        err instanceof Error ? err.message : "Couldn’t export the card.",
+        err instanceof Error ? err.message : m.share.exportError,
       );
     } finally {
       setExporting(false);
     }
-  }, [address, canShare]);
+  }, [address, canShare, m.share.exportError]);
 
   const shareOnX = useCallback(() => {
     if (!canShare || typeof window === "undefined") return;
@@ -327,6 +332,7 @@ export function ShareCardCta({
       uniqueTasks: fields.uniqueTasks,
       primarySkill: fields.topSkill,
       profileUrl,
+      m,
     });
     window.open(url, "_blank", "noopener,noreferrer");
   }, [
@@ -335,6 +341,7 @@ export function ShareCardCta({
     fields.contributionCount,
     fields.uniqueTasks,
     fields.topSkill,
+    m,
   ]);
 
   const modal =
@@ -349,7 +356,7 @@ export function ShareCardCta({
             <button
               type="button"
               className="absolute inset-0 bg-ink/40"
-              aria-label="Close generate card dialog"
+              aria-label={m.share.dialogAria}
               onClick={closeGenerator}
             />
             <div
@@ -360,17 +367,17 @@ export function ShareCardCta({
               <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-5">
                 <p id={titleId} className="eng-label">
                   {step === "ready"
-                    ? "Your card is ready"
+                    ? m.share.titleReady
                     : step === "generating"
-                      ? "Making your card"
-                      : "Make a share card"}
+                      ? m.share.titleGenerating
+                      : m.share.titleDetails}
                 </p>
                 <button
                   ref={closeBtnRef}
                   type="button"
                   onClick={closeGenerator}
                   className="text-text-dim transition hover:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                  aria-label="Close"
+                  aria-label={m.share.close}
                 >
                   <X size={16} />
                 </button>
@@ -379,12 +386,12 @@ export function ShareCardCta({
               {step === "details" && (
                 <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-5 sm:py-6">
                   <p className="max-w-md text-[14px] leading-relaxed text-text-muted">
-                    Optional Hub / X name on the card — totally up to you.
+                    {m.share.detailsHint}
                   </p>
 
                   <div className="mt-6 space-y-5">
                     <label className="block">
-                      <span className="eng-label">Axis Hub username</span>
+                      <span className="eng-label">{m.share.hubLabel}</span>
                       <input
                         ref={firstFieldRef}
                         type="text"
@@ -392,7 +399,7 @@ export function ShareCardCta({
                         onChange={(e) =>
                           setHubInput(e.target.value.slice(0, HUB_MAX))
                         }
-                        placeholder="your Hub username"
+                        placeholder={m.share.hubPlaceholder}
                         autoComplete="off"
                         spellCheck={false}
                         className="mt-2 w-full border border-border bg-bg-elevated px-3 py-2.5 font-mono text-sm text-ink outline-none transition placeholder:text-text-dim focus:border-ink"
@@ -400,24 +407,23 @@ export function ShareCardCta({
                     </label>
 
                     <label className="block">
-                      <span className="eng-label">X username</span>
+                      <span className="eng-label">{m.share.xLabel}</span>
                       <input
                         type="text"
                         value={xInput}
                         onChange={(e) => setXInput(e.target.value.slice(0, 64))}
-                        placeholder="@username"
+                        placeholder={m.share.xPlaceholder}
                         autoComplete="off"
                         spellCheck={false}
                         className="mt-2 w-full border border-border bg-bg-elevated px-3 py-2.5 font-mono text-sm text-ink outline-none transition placeholder:text-text-dim focus:border-ink"
                       />
                       <span className="mt-1.5 block text-[13px] text-text-dim">
-                        Accepts @handle or x.com links — shown as @handle on the
-                        card.
+                        {m.share.xHint}
                       </span>
                     </label>
 
                     <div>
-                      <p className="eng-label">Wallet</p>
+                      <p className="eng-label">{m.share.wallet}</p>
                       <p className="mt-2 font-mono text-sm text-text-muted">
                         {shortenAddress(address, 6)}
                       </p>
@@ -429,20 +435,20 @@ export function ShareCardCta({
                     onClick={generateCard}
                     className="mt-8 inline-flex w-full items-center justify-center gap-2 border border-ink bg-ink px-5 py-3 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:bg-accent hover:border-accent focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                   >
-                    GENERATE CARD
+                    {m.share.generate}
                     <ArrowRight size={14} strokeWidth={1.75} />
                   </button>
                   <p className="mt-3 text-[13px] text-text-muted">
-                    Names are optional — I don’t verify them.
+                    {m.share.namesOptional}
                   </p>
                 </div>
               )}
 
               {step === "generating" && (
                 <div className="flex flex-1 flex-col items-center justify-center px-4 py-16">
-                  <p className="eng-label text-accent">Making card…</p>
+                  <p className="eng-label text-accent">{m.share.making}</p>
                   <p className="mt-3 text-[13px] text-text-muted">
-                    One sec
+                    {m.share.oneSec}
                   </p>
                 </div>
               )}
@@ -454,7 +460,7 @@ export function ShareCardCta({
                     className="min-h-0 flex-1 overflow-y-auto bg-bg-soft/50 p-3 sm:p-5"
                   >
                     <p className="mb-3 eng-label text-accent sm:mb-4">
-                      Your card is ready
+                      {m.share.titleReady}
                     </p>
                     <div
                       style={{
@@ -496,7 +502,7 @@ export function ShareCardCta({
                         className="inline-flex w-full items-center justify-center gap-2 border border-ink bg-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:bg-accent hover:border-accent disabled:opacity-60 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                       >
                         <Download size={14} strokeWidth={1.75} />
-                        {exporting ? "EXPORTING…" : "DOWNLOAD CARD"}
+                        {exporting ? m.share.exporting : m.share.download}
                       </button>
                       <button
                         type="button"
@@ -504,7 +510,7 @@ export function ShareCardCta({
                         className="inline-flex w-full items-center justify-center gap-2 border border-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                       >
                         <Share2 size={14} strokeWidth={1.75} />
-                        SHARE ON X
+                        {m.share.shareOnX}
                       </button>
                       <button
                         type="button"
@@ -515,12 +521,11 @@ export function ShareCardCta({
                         className="inline-flex w-full items-center justify-center gap-2 border border-border px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-text-muted transition hover:border-ink hover:text-ink focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
                       >
                         <Pencil size={14} strokeWidth={1.75} />
-                        EDIT DETAILS
+                        {m.share.editDetails}
                       </button>
                     </div>
                     <p className="text-[13px] leading-relaxed text-text-dim">
-                      X opens with text and your profile link. Attach the
-                      downloaded PNG manually — images are not auto-uploaded.
+                      {m.share.attachNote}
                     </p>
                   </div>
                 </>
@@ -534,12 +539,12 @@ export function ShareCardCta({
   return (
     <>
       <div className="border-y border-border py-12 sm:py-14">
-        <p className="eng-label text-accent">Share</p>
+        <p className="eng-label text-accent">{m.share.eyebrow}</p>
         <h2 className="mt-3 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">
-          Share card
+          {m.share.title}
         </h2>
         <p className="mt-4 max-w-md text-[15px] leading-relaxed text-text-muted">
-          Download a PNG of this map if you want to post it.
+          {m.share.sub}
         </p>
 
         {canShare ? (
@@ -550,11 +555,11 @@ export function ShareCardCta({
               onClick={openGenerator}
               className="mt-8 inline-flex items-center gap-2 border border-ink px-5 py-3 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              GENERATE CARD
+              {m.share.generate}
               <ArrowRight size={14} strokeWidth={1.75} />
             </button>
             <p className="mt-3 text-[13px] text-text-muted">
-              Optional Hub / X name · 1200×675 PNG
+              {m.share.generateHint}
             </p>
           </>
         ) : (
@@ -564,11 +569,11 @@ export function ShareCardCta({
               disabled
               className="mt-8 inline-flex cursor-not-allowed items-center gap-2 border border-border px-5 py-3 font-mono text-[13px] tracking-[0.14em] text-text-dim opacity-70"
             >
-              GENERATE CARD
+              {m.share.generate}
               <ArrowRight size={14} strokeWidth={1.75} />
             </button>
             <p className="mt-3 max-w-md text-[13px] leading-relaxed text-text-muted">
-              Card unlocks once Hub history is fully loaded.
+              {m.share.lockedHint}
             </p>
           </>
         )}

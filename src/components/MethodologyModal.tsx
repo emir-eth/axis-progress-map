@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
+import { useLocale } from "./LocaleProvider";
 
 interface MethodologyModalProps {
   open: boolean;
@@ -9,6 +10,7 @@ interface MethodologyModalProps {
 }
 
 export function MethodologyModal({ open, onClose }: MethodologyModalProps) {
+  const { messages: m } = useLocale();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -24,6 +26,17 @@ export function MethodologyModal({ open, onClose }: MethodologyModalProps) {
 
   if (!open) return null;
 
+  const sections = [
+    {
+      title: m.methodology.trajectoriesTitle,
+      body: m.methodology.trajectoriesBody,
+    },
+    { title: m.methodology.signedTitle, body: m.methodology.signedBody },
+    { title: m.methodology.uniqueTitle, body: m.methodology.uniqueBody },
+    { title: m.methodology.averageTitle, body: m.methodology.averageBody },
+    { title: m.methodology.skillsTitle, body: m.methodology.skillsBody },
+  ];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
@@ -34,15 +47,15 @@ export function MethodologyModal({ open, onClose }: MethodologyModalProps) {
       <button
         type="button"
         className="absolute inset-0 bg-ink/35"
-        aria-label="Close"
+        aria-label={m.methodology.close}
         onClick={onClose}
       />
       <div className="relative z-10 max-h-[min(85vh,100dvh)] w-full max-w-xl overflow-y-auto border border-border bg-bg p-6 scrollbar-thin sm:p-8">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="eng-label">Numbers</p>
+            <p className="eng-label">{m.methodology.modalEyebrow}</p>
             <h2 id={titleId} className="mt-2 font-display text-2xl text-ink">
-              Where each stat comes from
+              {m.methodology.modalTitle}
             </h2>
           </div>
           <button
@@ -50,54 +63,21 @@ export function MethodologyModal({ open, onClose }: MethodologyModalProps) {
             type="button"
             onClick={onClose}
             className="border border-border p-2 text-text-muted transition hover:border-border-strong hover:text-text"
-            aria-label="Close"
+            aria-label={m.methodology.close}
           >
             <X size={16} />
           </button>
         </div>
 
         <div className="space-y-5 text-sm leading-relaxed text-text-muted">
-          <section>
-            <h3 className="mb-1 font-display text-base text-ink">
-              Trajectories
-            </h3>
-            <p>
-              Public Hub attempt total for the wallet. Logged-in Hub can show a
-              slightly different number — I stick to the public one.
-            </p>
-          </section>
-
-          <section>
-            <h3 className="mb-1 font-display text-base text-ink">
-              Signed &amp; unsigned
-            </h3>
-            <p>
-              Signed = Hub has a tx hash. Unsigned = it doesn’t. That’s it — no
-              extra chain scan for this split.
-            </p>
-          </section>
-
-          <section>
-            <h3 className="mb-1 font-display text-base text-ink">Unique tasks</h3>
-            <p>How many different task IDs show up in the loaded attempts.</p>
-          </section>
-
-          <section>
-            <h3 className="mb-1 font-display text-base text-ink">Average score</h3>
-            <p>
-              Average of real Hub scores only. Blank scores don’t count as zero.
-            </p>
-          </section>
-
-          <section>
-            <h3 className="mb-1 font-display text-base text-ink">
-              Skills &amp; environments
-            </h3>
-            <p>
-              I match Hub task IDs to public Axis task data when I can. No match
-              → no invented skills.
-            </p>
-          </section>
+          {sections.map((section) => (
+            <section key={section.title}>
+              <h3 className="mb-1 font-display text-base text-ink">
+                {section.title}
+              </h3>
+              <p>{section.body}</p>
+            </section>
+          ))}
         </div>
       </div>
     </div>

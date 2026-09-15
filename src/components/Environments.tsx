@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ThemeStat } from "@/types";
+import { useLocale } from "./LocaleProvider";
 
 interface EnvironmentsProps {
   themes: ThemeStat[];
@@ -17,13 +18,12 @@ export function Environments({
   themes,
   mappedContributions,
 }: EnvironmentsProps) {
+  const { messages: m } = useLocale();
   const [hovered, setHovered] = useState<string | null>(null);
 
   if (themes.length === 0) {
     return (
-      <p className="text-sm text-text-muted">
-        No environment breakdown yet — need Axis task matches first.
-      </p>
+      <p className="text-sm text-text-muted">{m.environments.empty}</p>
     );
   }
 
@@ -34,7 +34,7 @@ export function Environments({
   return (
     <div>
       <p className="mb-5 eng-label">
-        {total.toLocaleString()} matched contributions
+        {m.environments.matchedContributions(total)}
       </p>
       <ul className="divide-y divide-border border-y border-border">
         {themes.map((theme, i) => {

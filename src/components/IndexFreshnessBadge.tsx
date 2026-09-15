@@ -2,8 +2,9 @@
 
 import { useId, useState } from "react";
 import { Info } from "lucide-react";
-import { formatHubActivityFreshnessLabel } from "@/lib/format";
+import { formatHubActivityFreshnessLabelLocalized } from "@/lib/i18n";
 import type { IndexStatus } from "@/types";
+import { useLocale } from "./LocaleProvider";
 
 interface IndexFreshnessBadgeProps {
   status: IndexStatus;
@@ -15,6 +16,7 @@ export function IndexFreshnessBadge({
   status,
   nowMs,
 }: IndexFreshnessBadgeProps) {
+  const { locale, messages: m } = useLocale();
   const [open, setOpen] = useState(false);
   const tipId = useId();
 
@@ -36,16 +38,13 @@ export function IndexFreshnessBadge({
     return null;
   }
 
-  const title = formatHubActivityFreshnessLabel({
+  const title = formatHubActivityFreshnessLabelLocalized({
+    locale,
     freshness: status.freshness,
     lastVerifiedAt: status.lastSyncAt,
     nowMs,
   });
-  const subtitle = isStale
-    ? "Might be missing the newest Hub attempts"
-    : null;
-  const tip =
-    "I pull public Hub attempts and match them to Axis task data when I can.";
+  const subtitle = isStale ? m.freshness.staleSub : null;
 
   return (
     <div className="relative inline-flex max-w-full items-start gap-2 text-xs text-text-muted">
@@ -65,7 +64,7 @@ export function IndexFreshnessBadge({
         aria-expanded={open}
         aria-controls={tipId}
         onClick={() => setOpen((v) => !v)}
-        title="About this data"
+        title={m.freshness.aboutData}
       >
         <Info size={13} />
       </button>
@@ -75,7 +74,7 @@ export function IndexFreshnessBadge({
           role="tooltip"
           className="absolute right-0 top-full z-20 mt-2 w-72 border border-border bg-bg-elevated p-3 text-xs leading-relaxed text-text-muted shadow-lg"
         >
-          <p>{tip}</p>
+          <p>{m.freshness.tip}</p>
         </div>
       )}
     </div>

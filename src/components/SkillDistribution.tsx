@@ -4,11 +4,13 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import type { SkillNode } from "@/types";
 import { skillAsset, skillImageTuning } from "@/lib/assets";
+import { useLocale } from "./LocaleProvider";
 
 interface SkillDistributionProps {
   skills: SkillNode[];
   mappedContributions?: number;
   eventLevelAvailable?: boolean;
+  metadataAvailable?: boolean;
 }
 
 /** Exact counts stay truthful; tiny values get a readable minimum marker. */
@@ -34,9 +36,11 @@ function useIsSmUp(): boolean {
 function SkillIllustration({
   skill,
   boxClassName,
+  diagramAlt,
 }: {
   skill: string;
   boxClassName: string;
+  diagramAlt: string;
 }) {
   const src = skillAsset(skill);
   const tuning = skillImageTuning(skill);
@@ -47,7 +51,7 @@ function SkillIllustration({
       {src && !failed ? (
         <Image
           src={src}
-          alt={`${skill} skill diagram`}
+          alt={diagramAlt}
           width={420}
           height={420}
           unoptimized
@@ -72,7 +76,9 @@ export function SkillDistribution({
   skills,
   mappedContributions = 0,
   eventLevelAvailable = true,
+  metadataAvailable = true,
 }: SkillDistributionProps) {
+  const { messages: m } = useLocale();
   const sorted = useMemo(
     () =>
       [...skills].sort((a, b) => b.contributionCount - a.contributionCount),
@@ -84,11 +90,12 @@ export function SkillDistribution({
   const smUp = useIsSmUp();
 
   if (sorted.length === 0) {
-    return (
-      <p className="text-sm text-text-muted">
-        No skill breakdown yet — need Axis task matches first.
-      </p>
-    );
+    const emptyCopy = !eventLevelAvailable
+      ? m.skills.emptyNoEvents
+      : !metadataAvailable
+        ? m.skills.emptyNeedMatch
+        : m.skills.emptyNoMatch;
+    return <p className="text-sm text-text-muted">{emptyCopy}</p>;
   }
 
   const max = Math.max(...sorted.map((s) => s.contributionCount), 1);
@@ -125,6 +132,7 @@ export function SkillDistribution({
                     <SkillIllustration
                       skill={skill.skill}
                       boxClassName="mx-auto h-[11rem] w-[11rem]"
+                      diagramAlt={m.skills.skillDiagramAlt(skill.skill)}
                     />
                     <div className="flex items-baseline justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
@@ -166,6 +174,7 @@ export function SkillDistribution({
                     <SkillIllustration
                       skill={skill.skill}
                       boxClassName="h-[10.5rem] w-full max-w-[10.5rem] md:h-[11.5rem] md:max-w-[11.5rem] lg:h-[12.5rem] lg:max-w-[12.5rem]"
+                      diagramAlt={m.skills.skillDiagramAlt(skill.skill)}
                     />
 
                     <div className="min-w-0 py-1">
@@ -186,7 +195,7 @@ export function SkillDistribution({
                         </span>
                       </div>
                       <p className="mt-1.5 eng-label text-[13px] tracking-[0.14em]">
-                        Matched contributions
+                        {m.skills.matchedContributionsLabel}
                       </p>
                       <div
                         className={`measure-bar measure-bar-skill mt-4 w-full max-w-xl ${
@@ -221,17 +230,16 @@ export function SkillDistribution({
             <span className="font-display text-lg tabular-nums text-accent sm:text-xl">
               {active.contributionCount}
             </span>{" "}
-            matched contributions
+            {m.skills.matchedContributionsSuffix}
           </p>
           {sharePct != null && (
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-text-dim">
-              Shows up on {sharePct}% of matched attempts. Overlap is normal —
-              one task can hit multiple skills.
+              {m.skills.overlapNote(sharePct)}
             </p>
           )}
           {!eventLevelAvailable && (
             <p className="mt-2 text-[13px] text-text-dim">
-              Task-level detail is unavailable for this report.
+              {m.skills.taskLevelUnavailable}
             </p>
           )}
         </div>

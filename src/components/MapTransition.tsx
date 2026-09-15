@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { shortenAddress } from "@/lib/format";
 import { ASSETS } from "@/lib/assets";
+import { useLocale } from "./LocaleProvider";
 
 interface MapTransitionProps {
   address: string;
@@ -32,6 +33,7 @@ export function MapTransition({
   variant = "full",
   onSettled,
 }: MapTransitionProps) {
+  const { messages: m } = useLocale();
   const reduced = usePrefersReducedMotion();
   const short = useMemo(() => shortenAddress(address, 4), [address]);
   const [step, setStep] = useState(0);
@@ -61,11 +63,11 @@ export function MapTransition({
       }`}
       role="status"
       aria-live="polite"
-      aria-label="Loading your Axis activity map"
+      aria-label={m.transition.aria}
     >
       <div className="relative z-10 w-full max-w-xl">
         <div className="text-center">
-          <p className="eng-label">Wallet</p>
+          <p className="eng-label">{m.transition.wallet}</p>
           <p className="mt-2 font-mono text-lg text-ink sm:text-xl">{short}</p>
         </div>
 
@@ -77,13 +79,13 @@ export function MapTransition({
         />
 
         <div
-          className={`mt-6 flex justify-center gap-8 font-mono text-[13px] tracking-[0.2em] text-text-muted transition-opacity duration-500 sm:gap-12 ${
+          className={`mt-6 flex flex-wrap justify-center gap-4 font-mono text-[12px] tracking-[0.16em] text-text-muted transition-opacity duration-500 sm:gap-12 sm:text-[13px] sm:tracking-[0.2em] ${
             step >= 2 || reduced ? "opacity-100" : "opacity-0"
           }`}
         >
-          <span>PULL</span>
-          <span>MATCH</span>
-          <span>SHOW</span>
+          <span>{m.landing.step1Title.toUpperCase()}</span>
+          <span>{m.landing.step2Title.toUpperCase()}</span>
+          <span>{m.landing.step3Title.toUpperCase()}</span>
         </div>
 
         <div
@@ -110,11 +112,11 @@ export function MapTransition({
           }`}
         >
           <h1 className="font-display text-[clamp(1.5rem,3.5vw,2rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink">
-            <span className="block">Your Axis</span>
-            <span className="block">activity map</span>
+            <span className="block">{m.profile.headline1}</span>
+            <span className="block">{m.profile.headline2}</span>
           </h1>
           {waiting && (
-            <p className="mt-3 text-sm text-text-muted">Loading Hub data…</p>
+            <p className="mt-3 text-sm text-text-muted">{m.transition.pulling}</p>
           )}
         </div>
       </div>

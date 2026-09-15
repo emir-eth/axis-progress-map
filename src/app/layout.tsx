@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { BackToTop } from "@/components/BackToTop";
+import { LocaleProvider } from "@/components/LocaleProvider";
 import "./globals.css";
 
 const display = Space_Grotesk({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-display",
   weight: ["400", "500", "600", "700"],
 });
 
 const body = IBM_Plex_Sans({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-body",
   weight: ["400", "500", "600"],
 });
 
 const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-mono",
   weight: ["400", "500"],
 });
@@ -36,10 +37,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable}`}
+      suppressHydrationWarning
     >
       <body className="min-h-screen antialiased">
-        {children}
-        <BackToTop />
+        <LocaleProvider>
+          {children}
+          <BackToTop />
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Check } from "lucide-react";
 import { isValidWalletAddress } from "@/lib/format";
+import { useLocale } from "./LocaleProvider";
 
 interface WalletEntryFormProps {
   initialAddress?: string;
@@ -25,12 +26,12 @@ export function WalletEntryForm({
   lockedDisplay,
   onValidSubmit,
 }: WalletEntryFormProps) {
+  const { messages: m } = useLocale();
   const [address, setAddress] = useState(initialAddress);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus after mount — avoid autoFocus attribute SSR/client mismatches.
   useEffect(() => {
     if (!autoFocus || locked) return;
     inputRef.current?.focus({ preventScroll: true });
@@ -50,7 +51,7 @@ export function WalletEntryForm({
     setTouched(true);
     const value = normalizeAddressInput(address);
     if (!isValidWalletAddress(value)) {
-      setError("Enter a valid public wallet address (0x…).");
+      setError(m.wallet.errorInvalid);
       return;
     }
     setError(null);
@@ -67,9 +68,9 @@ export function WalletEntryForm({
 
   return (
     <form onSubmit={onSubmit} className="w-full max-w-xl">
-      <p className="eng-label mb-3 text-text-muted">Your public wallet</p>
+      <p className="eng-label mb-3 text-text-muted">{m.wallet.label}</p>
       <label htmlFor="wallet" className="sr-only">
-        Public wallet address
+        {m.wallet.labelSr}
       </label>
 
       <div
@@ -85,7 +86,7 @@ export function WalletEntryForm({
           spellCheck={false}
           autoComplete="off"
           disabled={locked}
-          placeholder="0x..."
+          placeholder={m.wallet.placeholder}
           value={locked && lockedDisplay ? lockedDisplay : address}
           onChange={(e) => {
             setAddress(e.target.value);
@@ -97,7 +98,7 @@ export function WalletEntryForm({
         {isValid && !locked && (
           <span
             className="flex items-center pr-2 text-accent"
-            aria-label="Valid address"
+            aria-label={m.wallet.validAria}
           >
             <Check size={16} strokeWidth={2} />
           </span>
@@ -105,21 +106,19 @@ export function WalletEntryForm({
         <button
           type="submit"
           disabled={locked || (!isValid && trimmed.length > 0)}
-          className="inline-flex shrink-0 items-center gap-2 border-l border-inherit bg-ink px-4 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:bg-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
+          className="inline-flex shrink-0 items-center gap-2 border-l border-inherit bg-ink px-3 font-mono text-[12px] tracking-[0.12em] text-bg transition hover:bg-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:text-[13px] sm:tracking-[0.14em]"
         >
-          VIEW REPORT
+          {m.wallet.submit}
           <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
         </button>
       </div>
 
       {error || showInvalid ? (
         <p className="mt-3 text-sm text-danger" role="alert">
-          {error ?? "That doesn’t look like a valid wallet address."}
+          {error ?? m.wallet.errorLooksWrong}
         </p>
       ) : (
-        <p className="mt-3 text-[13px] text-text-muted">
-          No connect · No private keys · Public data only
-        </p>
+        <p className="mt-3 text-[13px] text-text-muted">{m.wallet.hint}</p>
       )}
     </form>
   );

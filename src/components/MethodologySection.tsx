@@ -1,21 +1,25 @@
 "use client";
 
+import { useLocale } from "./LocaleProvider";
+
 export function MethodologySection() {
+  const { messages: m } = useLocale();
+
   return (
     <div>
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-10">
         {[
           {
-            title: "Pull",
-            body: "Public Hub attempts",
+            title: m.methodology.sectionPull,
+            body: m.methodology.sectionPullBody,
           },
           {
-            title: "Match",
-            body: "Tasks → skill / environment data",
+            title: m.methodology.sectionMatch,
+            body: m.methodology.sectionMatchBody,
           },
           {
-            title: "Split",
-            body: "Signed vs unsigned from Hub",
+            title: m.methodology.sectionSplit,
+            body: m.methodology.sectionSplitBody,
           },
         ].map((step) => (
           <div key={step.title}>
@@ -29,11 +33,10 @@ export function MethodologySection() {
         ))}
       </div>
       <p className="mt-8 eng-label text-text-muted">
-        Read-only · No connect · No private keys
+        {m.methodology.footerLabel}
       </p>
       <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-text-muted">
-        Trajectories and signed / unsigned come straight from Hub. I don’t
-        re-check every attempt on-chain just to show this page.
+        {m.methodology.footerNote}
       </p>
     </div>
   );

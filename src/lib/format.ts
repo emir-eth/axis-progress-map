@@ -22,9 +22,12 @@ export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
-export function formatDate(timestamp: number | null): string {
+export function formatDate(
+  timestamp: number | null,
+  locale: string = "en-US",
+): string {
   if (timestamp == null) return "—";
-  return new Date(timestamp * 1000).toLocaleString(undefined, {
+  return new Date(timestamp * 1000).toLocaleString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -34,9 +37,12 @@ export function formatDate(timestamp: number | null): string {
 }
 
 /** Concise table date (no time). */
-export function formatDateShort(timestamp: number | null): string {
+export function formatDateShort(
+  timestamp: number | null,
+  locale: string = "en-US",
+): string {
   if (timestamp == null) return "—";
-  return new Date(timestamp * 1000).toLocaleDateString(undefined, {
+  return new Date(timestamp * 1000).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -49,7 +55,7 @@ export function formatTimestampIso(timestamp: number | null): string | undefined
   return new Date(timestamp * 1000).toISOString();
 }
 
-const MONTHS_SHORT = [
+const MONTHS_SHORT_EN = [
   "JAN",
   "FEB",
   "MAR",
@@ -65,15 +71,12 @@ const MONTHS_SHORT = [
 ] as const;
 
 /**
- * Top-right Hub freshness label.
+ * Top-right Hub freshness label (English default).
+ * Prefer formatHubActivityFreshnessLabelLocalized from @/lib/i18n when locale-aware UI is available.
  *
  * - fresh → Hub contacted/verified this request → FROM PUBLIC HUB ACTIVITY
  * - cached / stale → real persisted Hub verification time (never page-load time)
  * - cached timestamp < 1 minute → FROM PUBLIC HUB ACTIVITY (never "UPDATED JUST NOW")
- *
- * Reading Turso alone does not upgrade freshness to "fresh"; that flag is set
- * only when Hub was contacted. This helper only formats — it does not invent
- * timestamps or rewrite hub_wallet_cache.updated_at.
  */
 export function formatHubActivityFreshnessLabel(opts: {
   freshness: "fresh" | "cached" | "stale";
@@ -87,7 +90,6 @@ export function formatHubActivityFreshnessLabel(opts: {
 
   const raw = opts.lastVerifiedAt?.trim();
   if (!raw) {
-    // No real timestamp available — do not invent one.
     return "FROM PUBLIC HUB ACTIVITY";
   }
 
@@ -102,7 +104,6 @@ export function formatHubActivityFreshnessLabel(opts: {
   const hour = 60 * minute;
   const day = 24 * hour;
 
-  // Extremely recent persisted time: avoid unclear "JUST NOW".
   if (deltaMs < minute) {
     return "FROM PUBLIC HUB ACTIVITY";
   }
@@ -116,7 +117,7 @@ export function formatHubActivityFreshnessLabel(opts: {
   }
 
   const d = new Date(then);
-  const month = MONTHS_SHORT[d.getUTCMonth()] ?? "JAN";
+  const month = MONTHS_SHORT_EN[d.getUTCMonth()] ?? "JAN";
   const dayNum = d.getUTCDate();
   const year = d.getUTCFullYear();
   return `UPDATED ${month} ${dayNum}, ${year}`;

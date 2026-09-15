@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AxisBrandMark } from "./AxisBrandMark";
+import { useLocaleOptional } from "../LocaleProvider";
 import "./preloader.css";
 
 interface BrandPreloaderProps {
@@ -18,6 +19,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function BrandPreloader({ onComplete }: BrandPreloaderProps) {
+  const { messages: m } = useLocaleOptional();
   const [exiting, setExiting] = useState(false);
 
   const finish = useCallback(() => {
@@ -52,7 +54,7 @@ export function BrandPreloader({ onComplete }: BrandPreloaderProps) {
     <div
       role="button"
       tabIndex={0}
-      aria-label="Skip preloader"
+      aria-label={m.nav.skipPreloader}
       onClick={finish}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -73,7 +75,7 @@ export function BrandPreloader({ onComplete }: BrandPreloaderProps) {
         <AxisBrandMark />
       </div>
 
-      <p className="axis-preloader__hint">Tap to continue</p>
+      <p className="axis-preloader__hint">{m.nav.tapContinue}</p>
     </div>
   );
 }

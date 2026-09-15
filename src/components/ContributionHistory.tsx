@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { DailyBucket } from "@/types";
+import { useLocale } from "./LocaleProvider";
 
 type Range = "7D" | "30D" | "ALL";
 
@@ -27,24 +28,25 @@ function filterRange(timeline: DailyBucket[], range: Range): DailyBucket[] {
   return timeline.filter((d) => new Date(d.date + "T00:00:00Z").getTime() >= start);
 }
 
+const RANGE_LABEL = {
+  "7D": "range7d",
+  "30D": "range30d",
+  ALL: "rangeAll",
+} as const;
+
 export function ContributionHistory({ timeline }: ContributionHistoryProps) {
+  const { messages: m } = useLocale();
   const [range, setRange] = useState<Range>("ALL");
   const data = useMemo(() => filterRange(timeline, range), [timeline, range]);
 
   if (timeline.length === 0) {
-    return (
-      <p className="text-sm text-text-muted">
-        No timestamped contributions available for the timeline.
-      </p>
-    );
+    return <p className="text-sm text-text-muted">{m.history.empty}</p>;
   }
 
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-text-muted">
-          Contributions per day and average score over time
-        </p>
+        <p className="text-sm text-text-muted">{m.history.subtitle}</p>
         <div className="flex border border-border">
           {(["7D", "30D", "ALL"] as Range[]).map((r) => (
             <button
@@ -57,7 +59,7 @@ export function ContributionHistory({ timeline }: ContributionHistoryProps) {
                   : "text-text-muted hover:text-text"
               }`}
             >
-              {r}
+              {m.history[RANGE_LABEL[r]]}
             </button>
           ))}
         </div>
@@ -103,7 +105,7 @@ export function ContributionHistory({ timeline }: ContributionHistoryProps) {
               yAxisId="count"
               type="monotone"
               dataKey="count"
-              name="Contributions"
+              name={m.history.tooltipCount}
               stroke="#20B86A"
               strokeWidth={1.5}
               dot={false}
@@ -113,7 +115,7 @@ export function ContributionHistory({ timeline }: ContributionHistoryProps) {
               yAxisId="score"
               type="monotone"
               dataKey="averageScore"
-              name="Avg score"
+              name={m.history.tooltipAvg}
               stroke="#5C6058"
               strokeWidth={1.25}
               strokeDasharray="4 4"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useLocale } from "./LocaleProvider";
 
 interface WelcomeModalProps {
   open: boolean;
@@ -15,9 +16,11 @@ const sectionBodyClass =
 
 /**
  * On-load welcome — same pattern as 500pixels-arts.
- * Shown after the brand preloader; dismiss with “Got it, Enter”.
+ * Shown after the brand preloader; dismiss with enter CTA.
  */
 export function WelcomeModal({ open, onEnter }: WelcomeModalProps) {
+  const { messages: m } = useLocale();
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -57,35 +60,23 @@ export function WelcomeModal({ open, onEnter }: WelcomeModalProps) {
           <div className="grid gap-10 md:grid-cols-2 md:gap-0">
             <section className="md:border-r md:border-border md:pr-10">
               <h2 id="welcome-title" className={sectionTitleClass}>
-                What is this?
+                {m.welcome.whatTitle}
               </h2>
               <div className={sectionBodyClass}>
-                <p>
-                  Drop your public Base wallet and I pull your Axis Hub activity
-                  into one place — trajectories, signed / unsigned, skills,
-                  environments, history, plus a card you can download.
-                </p>
-                <p>
-                  Only public Hub data. No connect. No keys. Nothing private.
-                </p>
+                <p>{m.welcome.whatP1}</p>
+                <p>{m.welcome.whatP2}</p>
               </div>
             </section>
 
             <section className="md:pl-10">
-              <h2 className={sectionTitleClass}>Who made this</h2>
+              <h2 className={sectionTitleClass}>{m.welcome.whoTitle}</h2>
               <div className={sectionBodyClass}>
-                <p>
-                  I built this myself for Axis contributors who just want to see
-                  what their work looks like outside Hub.
-                </p>
-                <p>
-                  Not official. Not affiliated with Axis Robotics. Just a
-                  community side project.
-                </p>
+                <p>{m.welcome.whoP1}</p>
+                <p>{m.welcome.whoP2}</p>
                 <div className="space-y-1 border-t border-border pt-4 font-mono text-[13px] tracking-[0.08em] text-text-muted">
-                  <p>Unofficial</p>
-                  <p>Public data only</p>
-                  <p>No wallet connect</p>
+                  <p>{m.welcome.badgeUnofficial}</p>
+                  <p>{m.welcome.badgePublic}</p>
+                  <p>{m.welcome.badgeNoConnect}</p>
                 </div>
               </div>
             </section>
@@ -98,7 +89,7 @@ export function WelcomeModal({ open, onEnter }: WelcomeModalProps) {
             onClick={onEnter}
             className="w-full border border-ink bg-ink py-4 font-mono text-[13px] uppercase tracking-[0.28em] text-bg transition hover:border-accent hover:bg-accent"
           >
-            Got it, Enter
+            {m.welcome.cta}
           </button>
         </div>
       </div>

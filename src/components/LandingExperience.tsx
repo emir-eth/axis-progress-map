@@ -9,6 +9,7 @@ import { WalletEntryForm } from "./WalletEntryForm";
 import { MapTransition, usePrefersReducedMotion } from "./MapTransition";
 import { BrandPreloader } from "./intro/BrandPreloader";
 import { ASSETS } from "@/lib/assets";
+import { useLocale } from "./LocaleProvider";
 
 const TRANSITION_MS = 1600;
 const WELCOME_SEEN_KEY = "axis-welcome-seen";
@@ -32,6 +33,7 @@ function markWelcomeSeen(): void {
 }
 
 export function LandingExperience() {
+  const { messages: m } = useLocale();
   const router = useRouter();
   const reduced = usePrefersReducedMotion();
   const [boot, setBoot] = useState<BootPhase>("preloader");
@@ -93,6 +95,12 @@ export function LandingExperience() {
     );
   }
 
+  const steps = [
+    { n: "01", title: m.landing.step1Title, body: m.landing.step1Body },
+    { n: "02", title: m.landing.step2Title, body: m.landing.step2Body },
+    { n: "03", title: m.landing.step3Title, body: m.landing.step3Body },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col bg-bg">
       <SiteNav
@@ -107,17 +115,16 @@ export function LandingExperience() {
         <section className="content-shell relative flex flex-1 flex-col justify-center px-5 py-12 sm:px-8 lg:py-16">
           <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.52fr)_minmax(0,0.48fr)] lg:gap-10 xl:gap-14">
             <div className="animate-fade-up relative z-10 order-1">
-              <p className="eng-label text-accent">Unofficial Axis tool</p>
+              <p className="eng-label text-accent">{m.landing.eyebrow}</p>
 
               <h1 className="mt-5 font-display text-[clamp(2.5rem,5.5vw,4.35rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-ink">
-                <span className="block">See what</span>
-                <span className="block">your Axis work</span>
-                <span className="block">actually maps to.</span>
+                <span className="block">{m.landing.headline1}</span>
+                <span className="block">{m.landing.headline2}</span>
+                <span className="block">{m.landing.headline3}</span>
               </h1>
 
               <p className="mt-6 max-w-md text-[15px] leading-relaxed text-text-muted sm:text-base">
-                Paste a public wallet. I read your Hub history and show skills,
-                environments, scores, and a shareable card.
+                {m.landing.sub}
               </p>
 
               <div className="mt-9">
@@ -140,7 +147,7 @@ export function LandingExperience() {
                   <div className="absolute left-[6%] top-[10%] h-px w-[28%] bg-border-strong/80" />
                   <div className="absolute left-[6%] top-[10%] h-3 w-px bg-border-strong/80" />
                   <p className="absolute left-[7%] top-[4%] eng-label text-[13px]">
-                    Your wallet
+                    {m.landing.labelWallet}
                   </p>
                   <div className="absolute bottom-[18%] right-[8%] h-16 w-16 rounded-full border border-border" />
                   <div className="absolute bottom-[22%] right-[12%] h-2 w-2 -translate-x-1/2 -translate-y-1/2">
@@ -148,16 +155,16 @@ export function LandingExperience() {
                     <div className="absolute left-1/2 top-0 h-2 w-px bg-text-dim" />
                   </div>
                   <p className="absolute bottom-[8%] right-[6%] eng-label text-[13px]">
-                    Skills
+                    {m.landing.labelSkills}
                   </p>
                   <p className="absolute left-[8%] bottom-[12%] eng-label text-[13px]">
-                    Public only
+                    {m.landing.labelPublic}
                   </p>
                 </div>
 
                 <Image
                   src={ASSETS.robotHero}
-                  alt="Robot arm illustration"
+                  alt={m.landing.robotAlt}
                   width={1200}
                   height={1200}
                   priority
@@ -171,23 +178,7 @@ export function LandingExperience() {
         <section id="about" className="border-t border-border bg-bg-elevated/60">
           <div className="content-shell px-5 py-12 sm:px-8 sm:py-14">
             <div className="grid gap-8 sm:grid-cols-3 sm:gap-10">
-              {[
-                {
-                  n: "01",
-                  title: "Pull",
-                  body: "Your public Hub attempts",
-                },
-                {
-                  n: "02",
-                  title: "Match",
-                  body: "Tasks to Axis skill data",
-                },
-                {
-                  n: "03",
-                  title: "Show",
-                  body: "A clear breakdown + card",
-                },
-              ].map((step) => (
+              {steps.map((step) => (
                 <div key={step.n} className="min-w-0">
                   <p className="font-mono text-[13px] tracking-[0.2em] text-accent">
                     {step.n}

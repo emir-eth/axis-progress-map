@@ -5,6 +5,8 @@ import { ASSETS } from "@/lib/assets";
 import { formatPercent, formatScore, shortenAddress } from "@/lib/format";
 import { deriveShareFields } from "@/lib/share-fields";
 import type { ProfileAnalytics } from "@/types";
+import type { Messages } from "@/lib/i18n";
+import { useLocaleOptional } from "./LocaleProvider";
 
 export const SHARE_CARD_WIDTH = 1200;
 export const SHARE_CARD_HEIGHT = 675;
@@ -29,6 +31,8 @@ interface ShareCardProps {
   } | null;
   /** Forwarded to the root for html-to-image capture. */
   cardRef?: Ref<HTMLDivElement>;
+  /** Override locale copy (e.g. tests); defaults to LocaleProvider. */
+  messages?: Messages;
 }
 
 const mono: CSSProperties = {
@@ -52,7 +56,10 @@ export function ShareCard({
   identity,
   hubTxhash,
   cardRef,
+  messages: messagesOverride,
 }: ShareCardProps) {
+  const { messages: contextMessages } = useLocaleOptional();
+  const card = messagesOverride ?? contextMessages;
   const fields = deriveShareFields(analytics, { hubTxhash });
   const hub = identity?.hubUsername?.trim() || undefined;
   const xHandle = identity?.xUsername?.trim() || undefined;
@@ -129,7 +136,7 @@ export function ShareCard({
       {/* ── Header ── */}
       <div style={{ position: "absolute", left: 80, top: 52, right: 500 }}>
         <p style={{ ...mono, margin: 0, fontSize: 11, color: "#5C6058" }}>
-          Axis Progress Map
+          {card.brand.name}
         </p>
         <p
           style={{
@@ -140,7 +147,7 @@ export function ShareCard({
             color: "#20B86A",
           }}
         >
-          Axis activity map
+          {card.card.activityMap}
         </p>
       </div>
 
@@ -153,10 +160,10 @@ export function ShareCard({
         }}
       >
         <p style={{ ...mono, margin: 0, fontSize: 10, color: "#5C6058" }}>
-          Hub / Public
+          {card.card.hubPublic}
         </p>
         <p style={{ ...mono, margin: "4px 0 0", fontSize: 10, color: "#5C6058" }}>
-          Progress Map
+          {card.card.progressMap}
         </p>
       </div>
 
@@ -175,9 +182,9 @@ export function ShareCard({
           padding: "12px 0",
         }}
       >
-        {hub && <IdChip label="Hub" value={hub} />}
-        {xHandle && <IdChip label="X" value={xHandle} />}
-        <IdChip label="Wallet" value={wallet} />
+        {hub && <IdChip label={card.card.hub} value={hub} />}
+        {xHandle && <IdChip label={card.card.x} value={xHandle} />}
+        <IdChip label={card.card.wallet} value={wallet} />
       </div>
 
       {/* ── Primary contribution count ── */}
@@ -204,7 +211,7 @@ export function ShareCard({
             lineHeight: 1.35,
           }}
         >
-          Trajectories
+          {card.card.trajectories}
         </p>
         <p
           style={{
@@ -217,7 +224,7 @@ export function ShareCard({
             textTransform: "none",
           }}
         >
-          From public Hub activity
+          {card.card.fromPublicHub}
         </p>
       </div>
 
@@ -236,15 +243,15 @@ export function ShareCard({
           paddingTop: 18,
         }}
       >
-        <Metric value={String(fields.uniqueTasks)} label="Unique tasks" />
+        <Metric value={String(fields.uniqueTasks)} label={card.card.uniqueTasks} />
         <div style={{ background: "#CFD1C8", width: 1, alignSelf: "stretch" }} />
         <Metric
           value={formatScore(fields.averageScore)}
-          label="Avg score"
+          label={card.card.avgScore}
           pad
         />
         <div style={{ background: "#CFD1C8", width: 1, alignSelf: "stretch" }} />
-        <Metric value={formatScore(fields.bestScore)} label="Best score" pad />
+        <Metric value={formatScore(fields.bestScore)} label={card.card.bestScore} pad />
       </div>
 
       {/* ── Snapshot: skill / environment / coverage only (fixed 1 row) ── */}
@@ -260,7 +267,7 @@ export function ShareCard({
           }}
         >
           <p style={{ ...mono, margin: 0, fontSize: 10, color: "#5C6058" }}>
-            Snapshot
+            {card.card.snapshot}
           </p>
           <div
             style={{
@@ -271,17 +278,17 @@ export function ShareCard({
             }}
           >
             {fields.topSkill && (
-              <ProfileCell label="Primary skill" value={fields.topSkill} />
+              <ProfileCell label={card.card.primarySkill} value={fields.topSkill} />
             )}
             {fields.topEnvironment && (
               <ProfileCell
-                label="Primary environment"
+                label={card.card.primaryEnvironment}
                 value={fields.topEnvironment}
               />
             )}
             {fields.metadataCoverage != null && (
               <ProfileCell
-                label="Task coverage"
+                label={card.card.taskCoverage}
                 value={formatPercent(fields.metadataCoverage)}
               />
             )}
@@ -342,7 +349,7 @@ export function ShareCard({
             color: "#5C6058",
           }}
         >
-          Axis Progress Map
+          {card.brand.name}
         </p>
         <p
           style={{
@@ -355,7 +362,7 @@ export function ShareCard({
             color: "#5C6058",
           }}
         >
-          Plate / Mono
+          {card.card.plateMono}
         </p>
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -417,7 +424,7 @@ export function ShareCard({
               color: "#252923",
             }}
           >
-            Axis Progress Map
+            {card.card.brand}
           </p>
           <p
             style={{
@@ -427,7 +434,7 @@ export function ShareCard({
               color: "#5C6058",
             }}
           >
-            Unofficial · Not affiliated with Axis Robotics
+            {card.card.unofficial}
           </p>
         </div>
 
@@ -442,13 +449,13 @@ export function ShareCard({
           >
             {fields.signedAttempts != null && (
               <FooterStat
-                label="Signed"
+                label={card.card.signed}
                 value={String(fields.signedAttempts)}
               />
             )}
             {fields.unsignedAttempts != null && (
               <FooterStat
-                label="Unsigned"
+                label={card.card.unsigned}
                 value={String(fields.unsignedAttempts)}
               />
             )}

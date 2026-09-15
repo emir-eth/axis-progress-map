@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, Search, X } from "lucide-react";
 import type { MappedContribution } from "@/types";
+import { localeTag } from "@/lib/i18n";
 import { baseScanTxUrl, formatDate, formatDateShort, formatTimestampIso } from "@/lib/format";
+import { useLocale } from "./LocaleProvider";
 
 interface ContributionExplorerProps {
   contributions: MappedContribution[];
@@ -41,6 +43,8 @@ function buildPageList(
 export function ContributionExplorer({
   contributions,
 }: ContributionExplorerProps) {
+  const { locale, messages: m } = useLocale();
+  const dateLocale = localeTag(locale);
   const [query, setQuery] = useState("");
   const [skill, setSkill] = useState("all");
   const [theme, setTheme] = useState("all");
@@ -143,25 +147,28 @@ export function ContributionExplorer({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tasks, IDs, skills…"
+            placeholder={m.explorer.searchPlaceholder}
             className="w-full border border-border bg-bg-panel py-2.5 pl-9 pr-3 text-sm text-text outline-none focus:border-border-strong"
           />
         </div>
         <div className="flex flex-wrap gap-2">
           <FilterSelect
-            label="Skill"
+            label={m.explorer.skill}
+            ariaLabel={m.explorer.filterAria(m.explorer.skill)}
             value={skill}
             onChange={setSkill}
             options={options.skills}
           />
           <FilterSelect
-            label="Theme"
+            label={m.explorer.theme}
+            ariaLabel={m.explorer.filterAria(m.explorer.theme)}
             value={theme}
             onChange={setTheme}
             options={options.themes}
           />
           <FilterSelect
-            label="Embodiment"
+            label={m.explorer.embodiment}
+            ariaLabel={m.explorer.filterAria(m.explorer.embodiment)}
             value={embodiment}
             onChange={setEmbodiment}
             options={options.embodiments}
@@ -170,11 +177,11 @@ export function ContributionExplorer({
             value={phase}
             onChange={(e) => setPhase(e.target.value)}
             className="border border-border bg-bg-panel px-2 py-2 text-xs text-text-muted outline-none"
-            aria-label="Phase filter"
+            aria-label={m.explorer.phaseFilter}
           >
-            <option value="all">Pre/Post</option>
-            <option value="pre">Pre</option>
-            <option value="post">Post</option>
+            <option value="all">{m.explorer.phaseAll}</option>
+            <option value="pre">{m.explorer.phasePre}</option>
+            <option value="post">{m.explorer.phasePost}</option>
           </select>
           <select
             value={status}
@@ -182,11 +189,11 @@ export function ContributionExplorer({
               setStatus(e.target.value as "all" | "signed" | "unsigned")
             }
             className="border border-border bg-bg-panel px-2 py-2 text-xs text-text-muted outline-none"
-            aria-label="Status filter"
+            aria-label={m.explorer.statusFilter}
           >
-            <option value="all">All</option>
-            <option value="signed">Signed</option>
-            <option value="unsigned">Unsigned</option>
+            <option value="all">{m.explorer.all}</option>
+            <option value="signed">{m.explorer.signed}</option>
+            <option value="unsigned">{m.explorer.unsigned}</option>
           </select>
         </div>
       </div>
@@ -194,20 +201,20 @@ export function ContributionExplorer({
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-text-dim">
           {totalFiltered === 0
-            ? `Showing 0 of ${contributions.length} contributions`
-            : `Showing ${pageStart}–${pageEnd} of ${totalFiltered} contributions`}
+            ? m.explorer.showingNone(contributions.length)
+            : m.explorer.showingRange(pageStart, pageEnd, totalFiltered)}
         </p>
         <label className="inline-flex items-center gap-2 font-mono text-[13px] tracking-[0.12em] text-text-dim">
-          <span className="sr-only">Rows per page</span>
+          <span className="sr-only">{m.explorer.rowsPerPage}</span>
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
             className="border border-border bg-bg-panel px-2 py-1.5 text-[13px] tracking-[0.12em] text-text-muted outline-none"
-            aria-label="Rows per page"
+            aria-label={m.explorer.rowsPerPage}
           >
             {PAGE_SIZE_OPTIONS.map((n) => (
               <option key={n} value={n}>
-                {n} / PAGE
+                {m.explorer.perPage(n)}
               </option>
             ))}
           </select>
@@ -218,14 +225,14 @@ export function ContributionExplorer({
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-border bg-bg-elevated text-xs uppercase tracking-wider text-text-dim">
             <tr>
-              <th className="px-3 py-3 font-medium">Task</th>
-              <th className="px-3 py-3 font-medium">Date</th>
-              <th className="px-3 py-3 font-medium">Score</th>
-              <th className="px-3 py-3 font-medium">Skills</th>
-              <th className="px-3 py-3 font-medium">Theme</th>
-              <th className="px-3 py-3 font-medium">Embodiment</th>
-              <th className="px-3 py-3 font-medium">Phase</th>
-              <th className="px-3 py-3 font-medium">Tx</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colTask}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colDate}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colScore}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colSkills}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colTheme}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colEmbodiment}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colPhase}</th>
+              <th className="px-3 py-3 font-medium">{m.explorer.colTx}</th>
             </tr>
           </thead>
           <tbody>
@@ -242,7 +249,7 @@ export function ContributionExplorer({
                 <td className="max-w-[220px] px-3 py-3.5">
                   <p className="truncate text-text">
                     {c.taskName ?? (
-                      <span className="text-text-muted">Unmapped</span>
+                      <span className="text-text-muted">{m.explorer.unmapped}</span>
                     )}
                   </p>
                   <p className="font-mono text-[13px] text-text-dim">
@@ -253,7 +260,7 @@ export function ContributionExplorer({
                   className="whitespace-nowrap px-3 py-3.5 text-text-muted"
                   title={formatTimestampIso(c.timestamp)}
                 >
-                  {formatDateShort(c.timestamp)}
+                  {formatDateShort(c.timestamp, dateLocale)}
                 </td>
                 <td className="px-3 py-3.5 text-text">
                   {c.score == null ? "—" : c.score}
@@ -285,7 +292,7 @@ export function ContributionExplorer({
                   ) : (
                     <span
                       className="font-mono text-[13px] tracking-[0.12em] text-text-dim"
-                      title="No transaction hash on this Hub attempt"
+                      title={m.explorer.noTxTitle}
                     >
                       —
                     </span>
@@ -299,7 +306,7 @@ export function ContributionExplorer({
                   colSpan={8}
                   className="px-3 py-8 text-center text-text-muted"
                 >
-                  No contributions match these filters.
+                  {m.explorer.noMatch}
                 </td>
               </tr>
             )}
@@ -317,10 +324,10 @@ export function ContributionExplorer({
               onClick={() => goToPage(safePage - 1)}
               className="border border-border px-3 py-2 font-mono text-[13px] tracking-[0.14em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
-              PREVIOUS
+              {m.explorer.prev}
             </button>
             <p className="font-mono text-[13px] tabular-nums tracking-[0.08em] text-text-dim">
-              {safePage} / {totalPages}
+              {m.explorer.pageOf(safePage, totalPages)}
             </p>
             <button
               type="button"
@@ -328,7 +335,7 @@ export function ContributionExplorer({
               onClick={() => goToPage(safePage + 1)}
               className="border border-border px-3 py-2 font-mono text-[13px] tracking-[0.14em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
-              NEXT
+              {m.explorer.next}
             </button>
           </div>
 
@@ -340,7 +347,7 @@ export function ContributionExplorer({
               onClick={() => goToPage(safePage - 1)}
               className="border border-border px-2.5 py-1.5 font-mono text-[13px] tracking-[0.12em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
-              PREVIOUS
+              {m.explorer.prev}
             </button>
             {pageButtons.map((item, idx) =>
               item === "ellipsis" ? (
@@ -373,7 +380,7 @@ export function ContributionExplorer({
               onClick={() => goToPage(safePage + 1)}
               className="border border-border px-2.5 py-1.5 font-mono text-[13px] tracking-[0.12em] text-text-muted transition enabled:hover:border-ink enabled:hover:text-ink disabled:opacity-40"
             >
-              NEXT
+              {m.explorer.next}
             </button>
           </div>
         </div>
@@ -383,6 +390,7 @@ export function ContributionExplorer({
         <TaskDetailDrawer
           contribution={selected}
           onClose={() => setSelected(null)}
+          dateLocale={dateLocale}
         />
       )}
     </div>
@@ -391,11 +399,13 @@ export function ContributionExplorer({
 
 function FilterSelect({
   label,
+  ariaLabel,
   value,
   onChange,
   options,
 }: {
   label: string;
+  ariaLabel: string;
   value: string;
   onChange: (v: string) => void;
   options: string[];
@@ -405,7 +415,7 @@ function FilterSelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="border border-border bg-bg-panel px-2 py-2 text-xs text-text-muted outline-none"
-      aria-label={`${label} filter`}
+      aria-label={ariaLabel}
     >
       <option value="all">{label}</option>
       {options.map((o) => (
@@ -420,10 +430,13 @@ function FilterSelect({
 function TaskDetailDrawer({
   contribution: c,
   onClose,
+  dateLocale,
 }: {
   contribution: MappedContribution;
   onClose: () => void;
+  dateLocale: string;
 }) {
+  const { messages: m } = useLocale();
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end"
@@ -433,24 +446,24 @@ function TaskDetailDrawer({
       <button
         type="button"
         className="absolute inset-0 bg-ink/35"
-        aria-label="Close task detail"
+        aria-label={m.explorer.closeDetail}
         onClick={onClose}
       />
       <aside className="relative z-10 flex h-full w-full max-w-md flex-col border-l border-border bg-bg-elevated p-6 shadow-2xl animate-fade-up">
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-text-dim">
-              Task detail
+              {m.explorer.taskDetail}
             </p>
             <h3 className="mt-1 font-display text-xl text-text">
-              {c.taskName ?? "Unmapped task"}
+              {c.taskName ?? m.explorer.unmappedTask}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="border border-border p-2 text-text-muted hover:text-text"
-            aria-label="Close"
+            aria-label={m.share.close}
           >
             <X size={16} />
           </button>
@@ -463,31 +476,40 @@ function TaskDetailDrawer({
         )}
 
         <dl className="space-y-3 overflow-y-auto text-sm scrollbar-thin">
-          <Row label="User score" value={c.score == null ? "—" : String(c.score)} />
-          <Row label="Task ID" value={c.taskId} mono />
-          <Row label="Data ID" value={c.dataId} mono />
           <Row
-            label="Skills"
+            label={m.explorer.rowUserScore}
+            value={c.score == null ? "—" : String(c.score)}
+          />
+          <Row label={m.explorer.taskId} value={c.taskId} mono />
+          <Row label={m.explorer.dataId} value={c.dataId} mono />
+          <Row
+            label={m.explorer.rowSkills}
             value={c.skills.length ? c.skills.join(", ") : "—"}
           />
-          <Row label="Theme" value={c.theme ?? "—"} />
-          <Row label="Embodiment" value={c.embodiment ?? "—"} />
+          <Row label={m.explorer.rowTheme} value={c.theme ?? "—"} />
+          <Row label={m.explorer.rowEmbodiment} value={c.embodiment ?? "—"} />
           <Row
-            label="Difficulty"
+            label={m.explorer.rowDifficulty}
             value={c.difficulty != null ? `${c.difficulty}★` : "—"}
           />
           <Row
-            label="Axis task success rate"
+            label={m.explorer.rowSuccessRate}
             value={
               c.successRate != null
                 ? `${(c.successRate * (c.successRate <= 1 ? 100 : 1)).toFixed(1)}%`
                 : "—"
             }
           />
-          <Row label="Phase" value={c.phase ?? "Unmapped"} />
-          <Row label="Contribution timestamp" value={formatDate(c.timestamp)} />
+          <Row
+            label={m.explorer.colPhase}
+            value={c.phase ?? m.explorer.unmapped}
+          />
+          <Row
+            label={m.explorer.rowTimestamp}
+            value={formatDate(c.timestamp, dateLocale)}
+          />
           <div>
-            <dt className="text-text-dim">Transaction hash</dt>
+            <dt className="text-text-dim">{m.explorer.rowTx}</dt>
             <dd className="mt-1">
               {c.transactionHash ? (
                 <a

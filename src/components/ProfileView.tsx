@@ -30,6 +30,44 @@ import {
   HubPreparationView,
   type HubPrepMode,
 } from "./HubPreparationView";
+import type { Messages } from "@/lib/i18n";
+import { localeTag } from "@/lib/i18n";
+import { useLocale } from "./LocaleProvider";
+
+const SERVER_DETAIL_FILTER =
+  /sqlite|RPC|checkpoint|request budget|page cursor|provider|stack|cache|HTTP|rate limited|reconcile|in-memory|freshness/i;
+
+function profileErrorTitle(
+  error: ProfileErrorResponse,
+  m: Messages,
+): string {
+  switch (error.code) {
+    case "INVALID_ADDRESS":
+      return m.profile.errorInvalidAddress;
+    case "INDEX_NOT_READY":
+      return m.profile.errorStorage;
+    case "SYNC_FAILED":
+      return m.profile.errorTimeout;
+    case "INTERNAL":
+      return m.profile.errorReach;
+    default:
+      return error.error;
+  }
+}
+
+function profileErrorDetails(
+  error: ProfileErrorResponse,
+  m: Messages,
+): string | undefined {
+  if (error.code === "SYNC_FAILED") {
+    return m.profile.errorTimeoutDetail;
+  }
+  const details = error.details?.trim();
+  if (!details || SERVER_DETAIL_FILTER.test(details)) {
+    return undefined;
+  }
+  return details;
+}
 
 interface ProfileViewProps {
   address: string;
@@ -68,6 +106,8 @@ function SectionHeader({
 }
 
 export function ProfileView({ address }: ProfileViewProps) {
+  const { locale, messages: m } = useLocale();
+  const numLocale = localeTag(locale);
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [error, setError] = useState<ProfileErrorResponse | null>(null);
   const [copied, setCopied] = useState(false);
@@ -393,17 +433,16 @@ export function ProfileView({ address }: ProfileViewProps) {
   }, [data]);
 
   if (error && !data) {
+    const errTitle = profileErrorTitle(error, m);
+    const errDetails = profileErrorDetails(error, m);
     return (
       <div className="flex min-h-screen flex-col bg-bg">
         <SiteNav />
         <main className="content-shell flex flex-1 flex-col justify-center px-5 py-16 sm:px-8">
-          <p className="eng-label">Couldn’t build this</p>
-          <h1 className="mt-3 font-display text-3xl text-ink">{error.error}</h1>
-          {error.details &&
-            !/sqlite|RPC|checkpoint|request budget|page cursor|provider|stack|cache|HTTP|rate limited|reconcile|in-memory|freshness/i.test(
-              error.details,
-            ) && (
-            <p className="mt-3 text-sm text-text-muted">{error.details}</p>
+          <p className="eng-label">{m.profile.errorShellTitle}</p>
+          <h1 className="mt-3 font-display text-3xl text-ink">{errTitle}</h1>
+          {errDetails && (
+            <p className="mt-3 text-sm text-text-muted">{errDetails}</p>
           )}
           <div className="mt-8 flex flex-wrap gap-3">
             <button
@@ -417,7 +456,7 @@ export function ProfileView({ address }: ProfileViewProps) {
               className="inline-flex items-center gap-2 border border-ink bg-ink px-4 py-2.5 text-sm text-bg transition hover:bg-text"
             >
               <RefreshCw size={14} />
-              Retry
+              {m.profile.retry}
             </button>
             {error.canShowStale && (
               <button
@@ -425,7 +464,7 @@ export function ProfileView({ address }: ProfileViewProps) {
                 onClick={() => fetchProfile({ soft: false, allowStale: true })}
                 className="border border-border px-4 py-2.5 text-sm text-text-muted transition hover:border-border-strong hover:text-text"
               >
-                Show last available data
+                {m.profile.showStale}
               </button>
             )}
             <Link
@@ -433,7 +472,7 @@ export function ProfileView({ address }: ProfileViewProps) {
               className="inline-flex items-center gap-1.5 border border-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.12em] text-ink transition hover:bg-ink hover:text-bg"
             >
               <ArrowLeft size={14} />
-              NEW WALLET
+              {m.profile.newWallet}
             </Link>
           </div>
         </main>
@@ -549,7 +588,7 @@ export function ProfileView({ address }: ProfileViewProps) {
             className="inline-flex items-center gap-2 border border-ink px-3.5 py-2 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <ArrowLeft size={14} />
-            NEW WALLET
+            {m.profile.newWallet}
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -558,7 +597,7 @@ export function ProfileView({ address }: ProfileViewProps) {
               className="inline-flex items-center gap-1.5 text-[13px] text-text-muted transition hover:text-text"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? "Copied" : "Copy address"}
+              {copied ? m.profile.copied : m.profile.copyAddress}
             </button>
             <IndexFreshnessBadge status={indexStatus} />
           </div>
@@ -586,24 +625,21 @@ export function ProfileView({ address }: ProfileViewProps) {
         )}
 
         <header className="max-w-3xl">
-          <p className="eng-label text-accent">Axis contributor</p>
+          <p className="eng-label text-accent">{m.profile.contributor}</p>
           <p className="mt-2 font-mono text-sm text-text-muted sm:text-base">
             {shortenAddress(data.address, 6)}
           </p>
           <h1 className="mt-6 font-display text-[clamp(2rem,4.5vw,3.25rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-ink">
-            <span className="block">Your Axis</span>
-            <span className="block">activity map</span>
+            <span className="block">{m.profile.headline1}</span>
+            <span className="block">{m.profile.headline2}</span>
           </h1>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-text-muted">
-            Pulled from public Hub attempts, then matched to Axis task info where
-            it exists.
+            {m.profile.sub}
           </p>
         </header>
 
         {empty ? (
-          <p className="mt-12 text-[15px] text-text-muted">
-            No Hub attempts found for this wallet.
-          </p>
+          <p className="mt-12 text-[15px] text-text-muted">{m.profile.empty}</p>
         ) : (
           <div className="mt-12 space-y-[4.5rem] sm:mt-14 sm:space-y-[5.5rem] lg:space-y-24">
             <section className="grid items-end gap-10 border-y border-border py-10 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] lg:gap-12 lg:py-12">
@@ -613,15 +649,14 @@ export function ProfileView({ address }: ProfileViewProps) {
                     data.hubTrajectories ??
                     data.hubStatus?.totalAttempts ??
                     summary.onChainContributions
-                  ).toLocaleString()}
+                  ).toLocaleString(numLocale)}
                 </p>
-                <p className="mt-2 eng-label">Trajectories</p>
+                <p className="mt-2 eng-label">{m.profile.trajectories}</p>
                 <p className="mt-1 text-[13px] text-text-dim">
-                  From public Hub activity
+                  {m.profile.fromPublicHub}
                 </p>
                 <p className="mt-2 max-w-md text-[13px] leading-relaxed text-text-muted">
-                  Hub’s logged-in total can be a bit different — this page uses
-                  the public number.
+                  {m.profile.trajectoriesNote}
                 </p>
 
                 <div className="mt-8 grid grid-cols-3 gap-4 border-t border-border pt-6">
@@ -629,19 +664,25 @@ export function ProfileView({ address }: ProfileViewProps) {
                     <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">
                       {summary.uniqueTasks}
                     </p>
-                    <p className="mt-1 eng-label text-[13px]">Unique tasks</p>
+                    <p className="mt-1 eng-label text-[13px]">
+                      {m.profile.uniqueTasks}
+                    </p>
                   </div>
                   <div className="border-l border-border pl-4">
                     <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">
                       {formatScore(summary.averageScore)}
                     </p>
-                    <p className="mt-1 eng-label text-[13px]">Average score</p>
+                    <p className="mt-1 eng-label text-[13px]">
+                      {m.profile.averageScore}
+                    </p>
                   </div>
                   <div className="border-l border-border pl-4">
                     <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">
                       {formatScore(summary.bestScore)}
                     </p>
-                    <p className="mt-1 eng-label text-[13px]">Best score</p>
+                    <p className="mt-1 eng-label text-[13px]">
+                      {m.profile.bestScore}
+                    </p>
                   </div>
                 </div>
 
@@ -649,18 +690,20 @@ export function ProfileView({ address }: ProfileViewProps) {
                   <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-5">
                     <div>
                       <p className="font-display text-xl tabular-nums text-ink">
-                        {data.hubTxhash.trajectoryCount.toLocaleString()}
+                        {data.hubTxhash.trajectoryCount.toLocaleString(numLocale)}
                       </p>
                       <p className="mt-1 eng-label text-[13px]">
-                        Signed attempts
+                        {m.profile.signedAttempts}
                       </p>
                     </div>
                     <div className="border-l border-border pl-4">
                       <p className="font-display text-xl tabular-nums text-ink">
-                        {data.hubTxhash.unsignedAttemptCount.toLocaleString()}
+                        {data.hubTxhash.unsignedAttemptCount.toLocaleString(
+                          numLocale,
+                        )}
                       </p>
                       <p className="mt-1 eng-label text-[13px]">
-                        Unsigned attempts
+                        {m.profile.unsignedAttempts}
                       </p>
                     </div>
                   </div>
@@ -681,7 +724,7 @@ export function ProfileView({ address }: ProfileViewProps) {
                 </div>
                 <Image
                   src={ASSETS.robotProfile}
-                  alt="Technical illustration of a robot arm"
+                  alt={m.profile.robotAlt}
                   width={1000}
                   height={1000}
                   className="relative z-[1] mx-auto h-auto w-full max-w-[420px] object-contain lg:max-w-none"
@@ -690,12 +733,12 @@ export function ProfileView({ address }: ProfileViewProps) {
                 <div className="relative z-[1] mt-4 flex flex-wrap items-baseline justify-between gap-2 border-t border-border pt-4">
                   <p className="font-mono text-[13px] tabular-nums text-text-muted">
                     {coverage.mappedUniqueTasks} / {coverage.totalUniqueTasks}{" "}
-                    tasks mapped
+                    {m.profile.tasksMapped}
                   </p>
                   <p className="font-display text-lg tabular-nums text-accent">
                     {formatPercent(coverage.coveragePercent)}
                     <span className="ml-2 eng-label text-text-dim">
-                      task coverage
+                      {m.profile.taskCoverage}
                     </span>
                   </p>
                 </div>
@@ -704,23 +747,24 @@ export function ProfileView({ address }: ProfileViewProps) {
 
             <section>
               <SectionHeader
-                code="01 / SKILL DISTRIBUTION"
-                title="Skill distribution"
-                subtitle="Which skills show up most in your matched tasks."
+                code={m.sections.skillsCode}
+                title={m.sections.skillsTitle}
+                subtitle={m.sections.skillsSub}
                 spacious
               />
               <SkillDistribution
                 skills={skills}
                 mappedContributions={coverage.mappedContributions}
                 eventLevelAvailable={eventLevelAvailable}
+                metadataAvailable={metadataAvailable}
               />
             </section>
 
             <section>
               <SectionHeader
-                code="02 / ENVIRONMENT DISTRIBUTION"
-                title="Environment distribution"
-                subtitle="Where those tasks sit — kitchen, home, office, etc."
+                code={m.sections.envCode}
+                title={m.sections.envTitle}
+                subtitle={m.sections.envSub}
               />
               <Environments
                 themes={themes}
@@ -729,14 +773,17 @@ export function ProfileView({ address }: ProfileViewProps) {
             </section>
 
             <section>
-              <SectionHeader code="03 / DATA COVERAGE" title="Data coverage" />
+              <SectionHeader
+                code={m.sections.coverageCode}
+                title={m.sections.coverageTitle}
+              />
               <DataCoverage coverage={coverage} />
             </section>
 
             <section>
               <SectionHeader
-                code="04 / METHODOLOGY"
-                title="How I build this"
+                code={m.sections.methodCode}
+                title={m.sections.methodTitle}
               />
               <MethodologySection />
             </section>
@@ -744,9 +791,9 @@ export function ProfileView({ address }: ProfileViewProps) {
             {showHistory && (
               <section>
                 <SectionHeader
-                  code="05 / HISTORY"
-                  title="Contribution history"
-                  subtitle="Your Hub attempts over time."
+                  code={m.sections.historyCode}
+                  title={m.sections.historyTitle}
+                  subtitle={m.sections.historySub}
                 />
                 <ContributionHistory timeline={timeline} />
               </section>
@@ -755,19 +802,16 @@ export function ProfileView({ address }: ProfileViewProps) {
             {showExplorer && (
               <section>
                 <SectionHeader
-                  code="06 / EXPLORER"
-                  title="Contribution explorer"
-                  subtitle="Every public Hub attempt for this wallet."
+                  code={m.sections.explorerCode}
+                  title={m.sections.explorerTitle}
+                  subtitle={m.sections.explorerSub}
                 />
                 <ContributionExplorer contributions={contributions} />
               </section>
             )}
 
             {!metadataAvailable && (
-              <p className="text-sm text-text-dim">
-                Skill / environment detail needs Axis task matching — missing
-                for this load.
-              </p>
+              <p className="text-sm text-text-dim">{m.profile.metadataMissing}</p>
             )}
 
             <ShareCardCta

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { ASSETS } from "@/lib/assets";
 import { shortenAddress } from "@/lib/format";
+import { localeTag } from "@/lib/i18n";
+import { useLocale } from "./LocaleProvider";
 import { SiteNav } from "./SiteNav";
 
 export type HubPrepMode = "syncing" | "paused" | "session-limit" | "ready";
@@ -44,6 +46,8 @@ export function HubPreparationView({
   syncing,
   onContinue,
 }: HubPreparationViewProps) {
+  const { locale, messages: m } = useLocale();
+  const numLocale = localeTag(locale);
   const total = hubTotal ?? 0;
   const pct = hubHistoryProgressPercent(fetchedAttempts, total);
 
@@ -53,13 +57,16 @@ export function HubPreparationView({
         <SiteNav />
         <main className="content-shell flex flex-1 flex-col justify-center px-5 py-16 sm:px-8">
           <div className="mx-auto w-full max-w-lg motion-safe:animate-fade-in">
-            <p className="eng-label text-accent">Axis contributor</p>
+            <p className="eng-label text-accent">{m.prep.contributor}</p>
             <p className="mt-8 font-display text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.03em] text-ink">
-              Ready
+              {m.prep.ready}
             </p>
             <div className="mt-8">
-              <p className="eng-label text-[13px]">Activity history</p>
-              <ActivityProgressRail percent={100} />
+              <p className="eng-label text-[13px]">{m.prep.activityHistory}</p>
+              <ActivityProgressRail
+                percent={100}
+                progressAria={m.prep.progressAria}
+              />
             </div>
           </div>
         </main>
@@ -78,36 +85,36 @@ export function HubPreparationView({
             className="inline-flex items-center gap-2 border border-ink px-3.5 py-2 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <ArrowLeft size={14} />
-            NEW WALLET
+            {m.prep.newWallet}
           </Link>
         </div>
 
         <div className="grid flex-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.42fr)] lg:items-center lg:gap-16">
           <div className="max-w-xl">
-            <p className="eng-label text-accent">Axis contributor</p>
+            <p className="eng-label text-accent">{m.prep.contributor}</p>
             <p className="mt-2 font-mono text-sm text-text-muted sm:text-base">
               {shortenAddress(address, 6)}
             </p>
 
             <h1 className="mt-8 font-display text-[clamp(1.85rem,5vw,2.75rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-ink">
-              <span className="block">Pulling your</span>
-              <span className="block">Hub history…</span>
+              <span className="block">{m.prep.headline1}</span>
+              <span className="block">{m.prep.headline2}</span>
             </h1>
 
             <p className="mt-5 text-[15px] leading-relaxed text-text-muted">
-              First load can take a bit — I’m paging through public Hub data.
+              {m.prep.sub}
             </p>
 
             <div className="mt-10 border-t border-border pt-8">
               <p className="font-display text-[clamp(2.5rem,6vw,3.5rem)] font-semibold tabular-nums tracking-[-0.04em] text-accent">
-                {total > 0 ? total.toLocaleString() : "—"}
+                {total > 0 ? total.toLocaleString(numLocale) : "—"}
               </p>
-              <p className="mt-2 eng-label">Hub attempts found</p>
+              <p className="mt-2 eng-label">{m.prep.hubAttemptsFound}</p>
             </div>
 
             <div className="mt-8">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="eng-label text-[13px]">Activity history</p>
+                <p className="eng-label text-[13px]">{m.prep.activityHistory}</p>
                 {pct != null && (
                   <p className="font-mono text-[13px] tabular-nums tracking-[0.08em] text-text-muted">
                     {pct}%
@@ -118,16 +125,17 @@ export function HubPreparationView({
                 percent={pct ?? 0}
                 ariaValueNow={fetchedAttempts}
                 ariaValueMax={total > 0 ? total : undefined}
+                progressAria={m.prep.progressAria}
               />
               <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-display text-2xl font-semibold tabular-nums tracking-[-0.03em] text-ink sm:text-3xl">
                   {total > 0
-                    ? `${fetchedAttempts.toLocaleString()} / ${total.toLocaleString()}`
+                    ? `${fetchedAttempts.toLocaleString(numLocale)} / ${total.toLocaleString(numLocale)}`
                     : fetchedAttempts > 0
-                      ? fetchedAttempts.toLocaleString()
+                      ? fetchedAttempts.toLocaleString(numLocale)
                       : "—"}
                 </p>
-                <p className="eng-label text-[13px]">Attempts loaded</p>
+                <p className="eng-label text-[13px]">{m.prep.attemptsLoaded}</p>
               </div>
             </div>
 
@@ -141,14 +149,14 @@ export function HubPreparationView({
                     aria-hidden
                   />
                   <p className="font-mono text-[13px] tracking-[0.16em] text-text">
-                    LOADING HUB HISTORY
+                    {m.prep.loading}
                   </p>
                 </div>
               )}
 
               {(mode === "paused" || mode === "session-limit") && (
                 <div className="border border-border bg-bg-elevated px-4 py-5">
-                  <p className="eng-label text-warning">Loading paused</p>
+                  <p className="eng-label text-warning">{m.prep.paused}</p>
                   <div className="mt-5 flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -156,14 +164,14 @@ export function HubPreparationView({
                       disabled={syncing}
                       className="border border-ink bg-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-bg transition hover:border-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      CONTINUE
+                      {m.prep.continue}
                     </button>
                     <Link
                       href="/"
                       className="inline-flex items-center gap-2 border border-ink px-4 py-2.5 font-mono text-[13px] tracking-[0.14em] text-ink transition hover:bg-ink hover:text-bg"
                     >
                       <ArrowLeft size={14} />
-                      NEW WALLET
+                      {m.prep.newWallet}
                     </Link>
                   </div>
                 </div>
@@ -194,10 +202,12 @@ function ActivityProgressRail({
   percent,
   ariaValueNow,
   ariaValueMax,
+  progressAria,
 }: {
   percent: number;
   ariaValueNow?: number;
   ariaValueMax?: number;
+  progressAria: string;
 }) {
   const width = Math.min(100, Math.max(0, percent));
   const ticks = [0, 25, 50, 75, 100];
@@ -206,7 +216,7 @@ function ActivityProgressRail({
     <div className="mt-3">
       <div
         role="progressbar"
-        aria-label="Activity history loaded"
+        aria-label={progressAria}
         aria-valuemin={0}
         aria-valuemax={ariaValueMax ?? 100}
         aria-valuenow={
