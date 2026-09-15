@@ -11,8 +11,25 @@ import { BrandPreloader } from "./intro/BrandPreloader";
 import { ASSETS } from "@/lib/assets";
 
 const TRANSITION_MS = 1600;
+const WELCOME_SEEN_KEY = "axis-welcome-seen";
 
 type BootPhase = "preloader" | "welcome" | "ready";
+
+function hasSeenWelcome(): boolean {
+  try {
+    return window.localStorage.getItem(WELCOME_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markWelcomeSeen(): void {
+  try {
+    window.localStorage.setItem(WELCOME_SEEN_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
 
 export function LandingExperience() {
   const router = useRouter();
@@ -56,7 +73,11 @@ export function LandingExperience() {
 
   if (boot === "preloader") {
     return (
-      <BrandPreloader onComplete={() => setBoot("welcome")} />
+      <BrandPreloader
+        onComplete={() => {
+          setBoot(hasSeenWelcome() ? "ready" : "welcome");
+        }}
+      />
     );
   }
 
@@ -76,7 +97,10 @@ export function LandingExperience() {
     <div className="flex min-h-screen flex-col bg-bg">
       <SiteNav
         welcomeOpen={boot === "welcome"}
-        onWelcomeEnter={() => setBoot("ready")}
+        onWelcomeEnter={() => {
+          markWelcomeSeen();
+          setBoot("ready");
+        }}
       />
 
       <main className="flex flex-1 flex-col">

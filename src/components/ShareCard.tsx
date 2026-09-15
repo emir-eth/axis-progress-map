@@ -59,10 +59,11 @@ export function ShareCard({
   const hub = identity?.hubUsername?.trim() || undefined;
   const xHandle = identity?.xUsername?.trim() || undefined;
   const wallet = shortenAddress(address, 6);
-  const hasProfile =
-    fields.topSkill ||
-    fields.topEnvironment ||
-    fields.metadataCoverage != null ||
+  const hasSnapshotPrimary =
+    Boolean(fields.topSkill) ||
+    Boolean(fields.topEnvironment) ||
+    fields.metadataCoverage != null;
+  const hasHubSplit =
     fields.signedAttempts != null ||
     fields.unsignedAttempts != null ||
     fields.baseRecords != null;
@@ -253,16 +254,16 @@ export function ShareCard({
         <Metric value={formatScore(fields.bestScore)} label="Best score" pad />
       </div>
 
-      {/* ── Contribution profile ── */}
-      {hasProfile && (
+      {/* ── Snapshot: skill / environment / coverage only (fixed 1 row) ── */}
+      {hasSnapshotPrimary && (
         <div
           style={{
             position: "absolute",
             left: 80,
-            top: 500,
+            top: 488,
             right: 500,
             borderTop: "1px solid #CFD1C8",
-            paddingTop: 14,
+            paddingTop: 12,
           }}
         >
           <p style={{ ...mono, margin: 0, fontSize: 10, color: "#5C6058" }}>
@@ -270,7 +271,7 @@ export function ShareCard({
           </p>
           <div
             style={{
-              marginTop: 10,
+              marginTop: 8,
               display: "grid",
               gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
               gap: 16,
@@ -291,24 +292,6 @@ export function ShareCard({
                 value={formatPercent(fields.metadataCoverage)}
               />
             )}
-            {fields.signedAttempts != null && (
-              <ProfileCell
-                label="Signed"
-                value={String(fields.signedAttempts)}
-              />
-            )}
-            {fields.unsignedAttempts != null && (
-              <ProfileCell
-                label="Unsigned"
-                value={String(fields.unsignedAttempts)}
-              />
-            )}
-            {fields.baseRecords != null && (
-              <ProfileCell
-                label="Base records"
-                value={String(fields.baseRecords)}
-              />
-            )}
           </div>
         </div>
       )}
@@ -320,7 +303,7 @@ export function ShareCard({
           right: 48,
           top: 48,
           width: 420,
-          bottom: 88,
+          bottom: 72,
         }}
       >
         {/* engineering annotations */}
@@ -416,35 +399,74 @@ export function ShareCard({
         />
       </div>
 
-      {/* ── Branding footer ── */}
+      {/* ── Footer: brand + signed/unsigned (single reserved band) ── */}
       <div
         style={{
           position: "absolute",
           left: 80,
-          right: 48,
-          bottom: 44,
+          right: 500,
+          bottom: 40,
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "space-between",
-          gap: 16,
+          gap: 20,
+          borderTop: "1px solid #CFD1C8",
+          paddingTop: 12,
         }}
       >
-        <div>
+        <div style={{ minWidth: 0, flex: "1 1 auto" }}>
           <p
             style={{
               ...mono,
               margin: 0,
-              fontSize: 12,
+              fontSize: 11,
               letterSpacing: "0.18em",
               color: "#252923",
             }}
           >
             Axis Progress Map
           </p>
-          <p style={{ margin: "4px 0 0", fontSize: 12, color: "#5C6058" }}>
+          <p
+            style={{
+              margin: "4px 0 0",
+              fontSize: 11,
+              lineHeight: 1.3,
+              color: "#5C6058",
+            }}
+          >
             Unofficial · Not affiliated with Axis Robotics
           </p>
         </div>
+
+        {hasHubSplit && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              gap: 22,
+              flex: "0 0 auto",
+            }}
+          >
+            {fields.signedAttempts != null && (
+              <FooterStat
+                label="Signed"
+                value={String(fields.signedAttempts)}
+              />
+            )}
+            {fields.unsignedAttempts != null && (
+              <FooterStat
+                label="Unsigned"
+                value={String(fields.unsignedAttempts)}
+              />
+            )}
+            {fields.baseRecords != null && (
+              <FooterStat
+                label="Base"
+                value={String(fields.baseRecords)}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -513,12 +535,36 @@ function ProfileCell({ label, value }: { label: string; value: string }) {
       <p
         style={{
           ...display,
-          margin: "5px 0 0",
-          fontSize: 20,
+          margin: "4px 0 0",
+          fontSize: 18,
           fontWeight: 600,
           color: "#151713",
           textTransform: "uppercase",
           letterSpacing: "-0.02em",
+          lineHeight: 1.15,
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function FooterStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ textAlign: "right" }}>
+      <p style={{ ...mono, margin: 0, fontSize: 9, color: "#5C6058" }}>
+        {label}
+      </p>
+      <p
+        style={{
+          ...display,
+          margin: "3px 0 0",
+          fontSize: 22,
+          fontWeight: 600,
+          color: "#151713",
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
         }}
       >
         {value}
